@@ -15,11 +15,24 @@ hi LineNr cterm=bold ctermfg=DarkGrey ctermbg=NONE
 hi CursorLineNr cterm=bold ctermfg=Green ctermbg=NONE
 EOF
 
-
 pip install powerline-shell
 
 mkdir -p ~/.config/powerline-shell && \
 powerline-shell --generate-config > ~/.config/powerline-shell/config.json
+
+cat << EOF >> $HOME/.config/powerline-shell/config.json
+{
+  "segments": [
+    "virtual_env",
+    "username",
+    "hostname",
+    "cwd",
+    "git",
+    "hg",
+    "root"
+  ]
+}
+EOF
 
 # paste the following snippet to bashrc
 <<comment
@@ -31,3 +44,4 @@ if [[ $TERM != linux && ! $PROMPT_COMMAND =~ _update_ps1 ]]; then
     PROMPT_COMMAND="_update_ps1; $PROMPT_COMMAND"
 fi
 comment
+
