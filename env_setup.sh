@@ -20,6 +20,7 @@ pip install powerline-shell
 mkdir -p ~/.config/powerline-shell && \
 powerline-shell --generate-config > ~/.config/powerline-shell/config.json
 
+rm $HOME/.config/powerline-shell/config.json
 cat << EOF >> $HOME/.config/powerline-shell/config.json
 {
   "segments": [
