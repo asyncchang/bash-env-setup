@@ -3,11 +3,15 @@
 git clone --depth=1 https://github.com/amix/vimrc.git ~/.vim_runtime
 sh ~/.vim_runtime/install_awesome_vimrc.sh
 
+[ -f ~/.vim_runtime/my_configs.vim ] && \
+rm ~/.vim_runtime/my_configs.vim
+
 cat << EOF >> $HOME/.vim_runtime/my_configs.vim
 set nu
 set cursorline
 set tabstop=4
 set shiftwidth=4
+set t_Co=256
 
 " Color configuration
 set background=dark
@@ -20,7 +24,9 @@ pip install powerline-shell
 mkdir -p ~/.config/powerline-shell && \
 powerline-shell --generate-config > ~/.config/powerline-shell/config.json
 
-rm $HOME/.config/powerline-shell/config.json
+[ -f ~/.config/powerline-shell/config.json ] && \
+rm ~/.config/powerline-shell/config.json
+
 cat << EOF >> $HOME/.config/powerline-shell/config.json
 {
   "segments": [
