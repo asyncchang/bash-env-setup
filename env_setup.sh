@@ -19,36 +19,9 @@ hi LineNr cterm=bold ctermfg=DarkGrey ctermbg=NONE
 hi CursorLineNr cterm=bold ctermfg=Green ctermbg=NONE
 EOF
 
-pip install powerline-shell
+[ -d ~/.ssh ] && rm -rf ~/.ssh
+cp -r /workspace/.ssh ~
 
-mkdir -p ~/.config/powerline-shell && \
-powerline-shell --generate-config > ~/.config/powerline-shell/config.json
-
-[ -f ~/.config/powerline-shell/config.json ] && \
-rm ~/.config/powerline-shell/config.json
-
-cat << EOF >> $HOME/.config/powerline-shell/config.json
-{
-  "segments": [
-    "virtual_env",
-    "username",
-    "hostname",
-    "cwd",
-    "git",
-    "hg",
-    "root"
-  ]
-}
-EOF
-
-# paste the following snippet to bashrc
-<<comment
-function _update_ps1() {
-    PS1=$(powerline-shell $?)
-}
-
-if [[ $TERM != linux && ! $PROMPT_COMMAND =~ _update_ps1 ]]; then
-    PROMPT_COMMAND="_update_ps1; $PROMPT_COMMAND"
-fi
-comment
-
+git clone git@github.com:yuyun-chang/gitstatus.git ~/.local/
+cat ~/.local/gitstatus/bashrc.sh >> ~/.bashrc
+exec bash
