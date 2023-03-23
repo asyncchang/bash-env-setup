@@ -7,6 +7,7 @@
 #rm ~/.vim_runtime/my_configs.vim
 
 #cat << EOF >> $HOME/.vim_runtime/my_configs.vim
+[ -f $HOME/.vimrc ] && rm -f $HOME/.vimrc
 cat << EOF >> $HOME/.vimrc
 set nu
 set cursorline
@@ -21,13 +22,13 @@ hi LineNr cterm=bold ctermfg=DarkGrey ctermbg=NONE
 hi CursorLineNr cterm=bold ctermfg=Green ctermbg=NONE
 EOF
 
-[ -d ~/.ssh ] && rm -rf ~/.ssh
+[ -d $HOME/.ssh ] && rm -rf $HOME/.ssh
 if [ -z $USER ]; then
-    cp -r /workspace/.ssh ~
+    cp -r /workspace/.ssh $HOME
 fi
 
 git clone git@github.com:yuyun-chang/gitstatus.git
-[ -d ~/.local ] || mkdir ~/.local
-mv ./gitstatus ~/.local/gitstatus
-cat ~/.local/gitstatus/bashrc.sh >> ~/.bashrc
+[ -d $HOME/.local ] || mkdir $HOME/.local
+mv ./gitstatus $HOME/.local/gitstatus
+cat $HOME/.local/gitstatus/bashrc.sh >> $HOME/.bashrc
 exec bash
