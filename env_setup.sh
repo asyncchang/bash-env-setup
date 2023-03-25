@@ -22,11 +22,6 @@ hi LineNr cterm=bold ctermfg=DarkGrey ctermbg=NONE
 hi CursorLineNr cterm=bold ctermfg=Green ctermbg=NONE
 EOF
 
-[ -d $HOME/.ssh ] && rm -rf $HOME/.ssh
-if [ -z $USER ]; then
-    cp -r /workspace/.ssh $HOME
-fi
-
 git clone git@github.com:yuyun-chang/gitstatus.git
 [ -d $HOME/.local ] || mkdir $HOME/.local
 mv ./gitstatus $HOME/.local/gitstatus
