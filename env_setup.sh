@@ -7,21 +7,15 @@ else
     config_file="$HOME/.bashrc"
 fi
 
-git_version="v$(echo $(git --version) | awk '{print $3}')"
 local_dir="$HOME/.local"
 
 [ -d "${local_dir}" ] || mkdir -p "${local_dir}"
 
-if ! grep -q "source ~/.local/git-prompt.sh" "${config_file}"; then
-    git clone https://github.com/git/git.git /tmp/git
-    pushd /tmp/git
-    git checkout "${git_version}"
-    mv contrib/completion/git-prompt.sh "${local_dir}"
-    popd
-    rm -rf /tmp/git
+if ! grep -q "source ~/.local/git_prompt.sh" "${config_file}"; then
+    cp git_prompt.sh "${local_dir}"
 
     echo >> "${config_file}"
-    echo "source ~/.local/git-prompt.sh" >> "${config_file}"
+    echo "source ~/.local/git_prompt.sh" >> "${config_file}"
     echo "GIT_PS1_SHOWDIRTYSTATE=1" >> "${config_file}"
     echo "PS1='${debian_chroot:+($debian_chroot)}\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\] \\[\\033[01;34m\\]\\w \\[\\033[01;33m\\]\$(__git_ps1 \"(%s)\")\\[\\033[00m\\]\\n\\$ '" >> "${config_file}"
     echo >> "${config_file}"
