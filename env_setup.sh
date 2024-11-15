@@ -7,6 +7,7 @@ function setup_git_prompt() {
     # Only add git prompt configuration if it's not already present
     if ! grep -q "source \"${local_dir}/git_prompt.sh\"" "${config_file}"; then
         {
+            echo
             echo "source \"${local_dir}/git_prompt.sh\""
         } >> "${config_file}"
     fi
@@ -79,10 +80,11 @@ function main() {
     fi
 
     local local_dir="$HOME/.local"
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     # Create local directory if it doesn't exist
     [ -d "${local_dir}" ] || mkdir -p "${local_dir}"
     [ -f "${local_dir}/git_prompt.sh" ] && rm -f "${local_dir}/git_prompt.sh"
-    cp git_prompt.sh "${local_dir}"
+    cp "${script_dir}/git_prompt.sh" "${local_dir}"
 
     echo "mode=$mode"
     if [[ "$mode" == "ali" ]]; then
