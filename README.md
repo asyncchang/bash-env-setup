@@ -1,12 +1,12 @@
 # Environment Setup Scripts
 
-This directory contains scripts to configure your development environment, including Git prompt integration and Vim configuration.
+This directory contains scripts to configure your shell prompt and Vim environment.
 
 ## Scripts
 
 ### `env_setup.sh`
 
-Configures the shell environment (Bash) to include a Git-aware prompt and sets up a basic Vim configuration.
+Configures the shell environment (Bash) to include a Git-aware prompt.
 
 **Usage:**
 
@@ -22,9 +22,8 @@ source env_setup.sh [mode]
   ```
   This will:
   1. Copy `git_prompt.sh` to `~/.local/`.
-  2. Append sourcing logic to your `.bash_profile` or `.bashrc`.
-  3. configure a basic `~/.vimrc`.
-  4. Reload the configuration in the current shell.
+  2. Install a managed prompt block in your `.bashrc`.
+  3. Reload the prompt configuration in the current shell.
 
 - **Alibaba mode (`ali`):**
   ```bash
