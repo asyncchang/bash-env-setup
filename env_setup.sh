@@ -64,7 +64,7 @@ write_prompt_block() {
         local git='\\[\\e[1;33m\\]'
         local reset='\\[\\e[0m\\]'
 
-        __git_ps1 "\${title}\${chroot}\${user_host} \${cwd} \${git}" "\${reset}\n\\\\\\$ "
+        __git_ps1 "\${title}\${chroot}\${user_host} \${cwd}\${git}" "\${reset}\n\\\\\\$ "
         return \$last_status
     }
 
