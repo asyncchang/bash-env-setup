@@ -1,8 +1,34 @@
 #!/bin/bash
 
+VIM_BLOCK_START="\" >>> bash-env-setup vim >>>"
+VIM_BLOCK_END="\" <<< bash-env-setup vim <<<"
+
+print_help() {
+    cat <<EOF
+Usage:
+  source env_setup.sh
+  source env_setup.sh [--help|-h]
+  bash env_setup.sh [--help|-h]
+
+Description:
+  Installs a managed Bash prompt configuration and writes managed Vim settings.
+
+Behavior:
+  - Copies git_prompt.sh to ~/.local/git_prompt.sh
+  - Installs a managed prompt block in ~/.bashrc by default
+  - Writes managed Vim settings to ~/.vimrc
+EOF
+}
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    case "${1:-}" in
+        -h|--help|help)
+            print_help
+            exit 0
+            ;;
+    esac
     echo "Error: this script must be sourced."
-    echo "Usage: source ${0} [mode]"
+    echo "Usage: source ${0}"
     exit 1
 fi
 
@@ -28,6 +54,47 @@ remove_legacy_prompt_config() {
     sed -i '/^PS1=.*__git_ps1/d' "${config_file}"
     sed -i '/^export PS1=.*__git_ps1/d' "${config_file}"
     sed -i '/^PROMPT_COMMAND=bash_env_setup_prompt_command$/d' "${config_file}"
+}
+
+remove_vim_block() {
+    local config_file="$1"
+
+    [[ -f "${config_file}" ]] || return 0
+    sed -i "/${VIM_BLOCK_START}/,/${VIM_BLOCK_END}/d" "${config_file}"
+}
+
+write_vim_block() {
+    local config_file="$1"
+
+    touch "${config_file}"
+
+    {
+        echo
+        echo "${VIM_BLOCK_START}"
+        cat <<'EOF'
+set nu
+set cursorline
+set tabstop=4
+set shiftwidth=4
+set t_Co=256
+
+" Color configuration
+set background=dark
+colorscheme elflord
+hi LineNr cterm=bold ctermfg=DarkGrey ctermbg=NONE
+hi CursorLineNr cterm=bold ctermfg=Green ctermbg=NONE
+EOF
+        echo "${VIM_BLOCK_END}"
+    } >> "${config_file}"
+}
+
+install_vim_config() {
+    local vimrc
+
+    vimrc="$HOME/.vimrc"
+
+    remove_vim_block "${vimrc}"
+    write_vim_block "${vimrc}"
 }
 
 write_prompt_block() {
@@ -107,8 +174,15 @@ copy_git_prompt() {
 }
 
 main() {
-    local mode="$1"
+    local mode="${1:-}"
     local script_dir local_dir prompt_file
+
+    case "${mode}" in
+        -h|--help|help)
+            print_help
+            return 0
+            ;;
+    esac
 
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local_dir="$HOME/.local"
@@ -116,17 +190,9 @@ main() {
 
     copy_git_prompt "${script_dir}" "${local_dir}" || return 1
 
-    if [[ "${mode}" == "ali" ]]; then
-        if [[ ${EUID} -ne 0 ]]; then
-            echo "Error: Alibaba configuration must be run as root."
-            return 1
-        fi
-        install_prompt "/etc/profile.d/alibaba_bashenv.sh" "${prompt_file}" '\H'
-        return 0
-    fi
-
     touch "$HOME/.bashrc"
     install_prompt "$HOME/.bashrc" "${prompt_file}" '\h'
+    install_vim_config
 }
 
 main "$@"
