@@ -69,7 +69,6 @@ write_vim_block() {
     touch "${config_file}"
 
     {
-        echo
         echo "${VIM_BLOCK_START}"
         cat <<'EOF'
 set nu
@@ -80,7 +79,6 @@ set t_Co=256
 
 " Color configuration
 set background=dark
-colorscheme elflord
 hi LineNr cterm=bold ctermfg=DarkGrey ctermbg=NONE
 hi CursorLineNr cterm=bold ctermfg=Green ctermbg=NONE
 EOF
