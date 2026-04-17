@@ -79,8 +79,13 @@ set t_Co=256
 
 " Color configuration
 set background=dark
-hi LineNr cterm=bold ctermfg=DarkGrey ctermbg=NONE
+hi LineNr cterm=bold ctermfg=Gray ctermbg=NONE
 hi CursorLineNr cterm=bold ctermfg=Green ctermbg=NONE
+
+highlight DiffAdd    cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
+highlight DiffDelete cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
+highlight DiffChange cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
+highlight DiffText   cterm=bold ctermfg=10 ctermbg=88 gui=none guifg=bg guibg=Red
 EOF
         echo "${VIM_BLOCK_END}"
     } >> "${config_file}"
