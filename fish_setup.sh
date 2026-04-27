@@ -27,8 +27,7 @@ Usage:
 
 Description:
   Installs the fish shell and configures interactive bash sessions to
-  drop straight into fish. Both pieces are intentionally isolated from
-  env_setup.sh, since fish may not be available on every machine.
+  drop straight into fish.
 
 Supported package managers:
   apt-get, dnf, yum, apk, pacman, zypper, brew
@@ -50,9 +49,9 @@ Color behavior:
   Adds a managed block to ~/.config/fish/config.fish that overrides
   fish's blue/cyan-leaning syntax-highlighting and pager defaults so
   text stays readable on dark backgrounds (e.g. WSL Ubuntu's theme).
-  Also overwrites LS_COLORS to match env_setup.sh: regenerates the
-  base map via dircolors then sets directories teal and symlinks
-  orange so they're distinguishable on dark backgrounds.
+  Also sets LS_COLORS: regenerates the base map via dircolors then
+  sets directories teal and symlinks orange so they're distinguishable
+  on dark backgrounds.
 EOF
 }
 
@@ -256,8 +255,8 @@ set -g fish_pager_color_prefix brgreen --bold
 set -g fish_pager_color_progress brwhite --background=brblack
 set -g fish_pager_color_selected_background --background=brblack
 
-# Mirror env_setup.sh's bash prompt block: regenerate LS_COLORS via
-# dircolors then set directories teal and symlinks orange.
+# Regenerate LS_COLORS via dircolors then set directories teal and
+# symlinks orange so they're distinguishable on dark backgrounds.
 if type -q dircolors
     set -gx LS_COLORS (dircolors -c | string replace -r "^setenv LS_COLORS '(.*)'\$" '$1')
 end
