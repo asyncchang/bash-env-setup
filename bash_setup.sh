@@ -8,10 +8,11 @@ Usage:
   bash bash_setup.sh [--help|-h]
 
 Description:
-  Installs a managed Bash prompt configuration and writes managed Vim settings.
+  Installs managed Bash PATH and prompt configuration and writes managed Vim settings.
 
 Behavior:
   - Copies git_prompt.sh to ~/.local/git_prompt.sh
+  - Installs a managed PATH block in ~/.bashrc to prepend ~/.local/bin
   - Installs a managed prompt block in ~/.bashrc by default
   - Writes managed Vim settings to ~/.vimrc
 EOF
@@ -29,8 +30,33 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     exit 1
 fi
 
+PATH_BLOCK_START="# >>> bash-env-setup path >>>"
+PATH_BLOCK_END="# <<< bash-env-setup path <<<"
 PROMPT_BLOCK_START="# >>> bash-env-setup prompt >>>"
 PROMPT_BLOCK_END="# <<< bash-env-setup prompt <<<"
+
+remove_path_block() {
+    local config_file="$1"
+
+    sed -i "/${PATH_BLOCK_START}/,/${PATH_BLOCK_END}/d" "${config_file}"
+}
+
+write_path_block() {
+    local config_file="$1"
+
+    {
+        echo "${PATH_BLOCK_START}"
+        cat <<'EOF'
+case ":${PATH}:" in
+    *":${HOME}/.local/bin:"*) ;;
+    *)
+        export PATH="${HOME}/.local/bin${PATH:+:${PATH}}"
+        ;;
+esac
+EOF
+        echo "${PATH_BLOCK_END}"
+    } >> "${config_file}"
+}
 
 remove_prompt_block() {
     local config_file="$1"
@@ -118,6 +144,13 @@ install_prompt() {
     source "${config_file}"
 }
 
+install_path() {
+    local config_file="$1"
+
+    remove_path_block "${config_file}"
+    write_path_block "${config_file}"
+}
+
 copy_git_prompt() {
     local source_dir="$1"
     local target_dir="$2"
@@ -151,6 +184,7 @@ main() {
     copy_git_prompt "${script_dir}" "${local_dir}" || return 1
 
     touch "$HOME/.bashrc"
+    install_path "$HOME/.bashrc"
     install_prompt "$HOME/.bashrc" "${prompt_file}" '\h'
 
     # shellcheck source=vim_setup.sh

@@ -2,8 +2,8 @@
 
 set -e
 
-FISH_BLOCK_START="# >>> bash-env-setup fish-autostart >>>"
-FISH_BLOCK_END="# <<< bash-env-setup fish-autostart <<<"
+FISH_PATH_BLOCK_START="# >>> bash-env-setup fish-path >>>"
+FISH_PATH_BLOCK_END="# <<< bash-env-setup fish-path <<<"
 FISH_PROMPT_BLOCK_START="# >>> bash-env-setup fish-prompt >>>"
 FISH_PROMPT_BLOCK_END="# <<< bash-env-setup fish-prompt <<<"
 FISH_COLORS_BLOCK_START="# >>> bash-env-setup fish-colors >>>"
@@ -12,14 +12,14 @@ FISH_COLORS_BLOCK_END="# <<< bash-env-setup fish-colors <<<"
 print_help() {
     cat <<EOF
 Usage:
-  bash fish_setup.sh                # install fish + auto-enter + prompt + colors + vim
+  bash fish_setup.sh                # install fish + path + prompt + colors + vim
   bash fish_setup.sh install        # install fish only
-  bash fish_setup.sh autostart      # configure auto-enter only
+  bash fish_setup.sh path           # install fish PATH block only
   bash fish_setup.sh prompt         # install fish prompt config only
   bash fish_setup.sh colors         # install fish color overrides only
   bash fish_setup.sh vim            # install vim config only
-  bash fish_setup.sh uninstall-autostart
-                                    # remove the auto-enter block from ~/.bashrc
+  bash fish_setup.sh uninstall-path
+                                    # remove the PATH block from ~/.config/fish/config.fish
   bash fish_setup.sh uninstall-prompt
                                     # remove the prompt block from ~/.config/fish/config.fish
   bash fish_setup.sh uninstall-colors
@@ -27,19 +27,14 @@ Usage:
   bash fish_setup.sh [--help|-h]
 
 Description:
-  Installs the fish shell and configures interactive bash sessions to
-  drop straight into fish.
+  Installs the fish shell plus optional PATH, prompt, color, and vim config.
 
 Supported package managers:
   apt-get, dnf, yum, apk, pacman, zypper, brew
 
-Auto-enter behavior:
-  Adds a managed block to ~/.bashrc that exec's fish for new
-  interactive shells. Skipped when:
-    - shell is non-interactive
-    - parent process is fish (avoids recursion)
-    - BASH_ENV_SETUP_NO_FISH is set (escape hatch)
-    - fish is not on PATH
+PATH behavior:
+  Adds a managed block to ~/.config/fish/config.fish that prepends
+  ~/.local/bin when it is not already present in PATH.
 
 Prompt behavior:
   Adds a managed block to ~/.config/fish/config.fish that defines
@@ -107,60 +102,50 @@ install_fish() {
     echo "fish installed: $(command -v fish) ($(fish --version 2>/dev/null))"
 }
 
-remove_fish_block() {
-    local config_file="$1"
-
-    [[ -f "${config_file}" ]] || return 0
-    sed -i "/${FISH_BLOCK_START}/,/${FISH_BLOCK_END}/d" "${config_file}"
-}
-
-write_fish_block() {
-    local config_file="$1"
-
-    {
-        echo "${FISH_BLOCK_START}"
-        cat <<'EOF'
-# Auto-exec fish for interactive shells. Skips when:
-#  - shell is non-interactive
-#  - already inside fish (parent is fish)
-#  - BASH_ENV_SETUP_NO_FISH is set (escape hatch)
-#  - fish isn't installed
-if [[ $- == *i* ]] \
-    && [[ -z "$BASH_ENV_SETUP_NO_FISH" ]] \
-    && command -v fish >/dev/null 2>&1; then
-    case "$(ps -o comm= -p "$PPID" 2>/dev/null)" in
-        fish|*/fish) ;;
-        *) exec fish ;;
-    esac
-fi
-EOF
-        echo "${FISH_BLOCK_END}"
-    } >> "${config_file}"
-}
-
-install_autostart() {
-    local config_file="$HOME/.bashrc"
-
-    touch "${config_file}"
-    remove_fish_block "${config_file}"
-    write_fish_block "${config_file}"
-    echo "fish auto-enter block installed in ${config_file}"
-    echo "Open a new interactive shell to drop into fish."
-    echo "Bypass with: BASH_ENV_SETUP_NO_FISH=1 bash"
-}
-
-uninstall_autostart() {
-    local config_file="$HOME/.bashrc"
-
-    remove_fish_block "${config_file}"
-    echo "fish auto-enter block removed from ${config_file}"
-}
-
 remove_fish_prompt_block() {
     local config_file="$1"
 
     [[ -f "${config_file}" ]] || return 0
     sed -i "/${FISH_PROMPT_BLOCK_START}/,/${FISH_PROMPT_BLOCK_END}/d" "${config_file}"
+}
+
+remove_fish_path_block() {
+    local config_file="$1"
+
+    [[ -f "${config_file}" ]] || return 0
+    sed -i "/${FISH_PATH_BLOCK_START}/,/${FISH_PATH_BLOCK_END}/d" "${config_file}"
+}
+
+write_fish_path_block() {
+    local config_file="$1"
+
+    {
+        echo "${FISH_PATH_BLOCK_START}"
+        cat <<'EOF'
+if not contains -- "$HOME/.local/bin" $PATH
+    set -gx PATH "$HOME/.local/bin" $PATH
+end
+EOF
+        echo "${FISH_PATH_BLOCK_END}"
+    } >> "${config_file}"
+}
+
+install_fish_path() {
+    local config_dir="$HOME/.config/fish"
+    local config_file="${config_dir}/config.fish"
+
+    mkdir -p "${config_dir}"
+    touch "${config_file}"
+    remove_fish_path_block "${config_file}"
+    write_fish_path_block "${config_file}"
+    echo "fish PATH block installed in ${config_file}"
+}
+
+uninstall_fish_path() {
+    local config_file="$HOME/.config/fish/config.fish"
+
+    remove_fish_path_block "${config_file}"
+    echo "fish PATH block removed from ${config_file}"
 }
 
 write_fish_prompt_block() {
@@ -301,8 +286,8 @@ main() {
         install)
             install_fish
             ;;
-        autostart)
-            install_autostart
+        path)
+            install_fish_path
             ;;
         prompt)
             install_fish_prompt
@@ -313,8 +298,8 @@ main() {
         vim)
             install_vim
             ;;
-        uninstall-autostart)
-            uninstall_autostart
+        uninstall-path)
+            uninstall_fish_path
             ;;
         uninstall-prompt)
             uninstall_fish_prompt
@@ -324,7 +309,7 @@ main() {
             ;;
         all|"")
             install_fish
-            install_autostart
+            install_fish_path
             install_fish_prompt
             install_fish_colors
             install_vim
