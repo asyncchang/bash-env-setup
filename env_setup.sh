@@ -114,6 +114,11 @@ write_prompt_block() {
     export GIT_PS1_SHOWDIRTYSTATE=1
     export GIT_PS1_SHOWUNTRACKEDFILES=1
 
+    if [ -x /usr/bin/dircolors ]; then
+        eval "\$(dircolors -b)"
+    fi
+    export LS_COLORS="\${LS_COLORS}:di=01;94"
+
     bash_env_setup_prompt_command() {
         local last_status=\$?
         local chroot=""
@@ -130,7 +135,7 @@ write_prompt_block() {
         esac
 
         local user_host='\\[\\e[1;32m\\]\\u@${host_token}\\[\\e[0m\\]'
-        local cwd='\\[\\e[1;34m\\]\\w\\[\\e[0m\\]'
+        local cwd='\\[\\e[1;36m\\]\\w\\[\\e[0m\\]'
         local git='\\[\\e[1;33m\\]'
         local reset='\\[\\e[0m\\]'
 
