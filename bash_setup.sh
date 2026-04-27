@@ -1,14 +1,11 @@
 #!/bin/bash
 
-VIM_BLOCK_START="\" >>> bash-env-setup vim >>>"
-VIM_BLOCK_END="\" <<< bash-env-setup vim <<<"
-
 print_help() {
     cat <<EOF
 Usage:
-  source env_setup.sh
-  source env_setup.sh [--help|-h]
-  bash env_setup.sh [--help|-h]
+  source bash_setup.sh
+  source bash_setup.sh [--help|-h]
+  bash bash_setup.sh [--help|-h]
 
 Description:
   Installs a managed Bash prompt configuration and writes managed Vim settings.
@@ -56,57 +53,12 @@ remove_legacy_prompt_config() {
     sed -i '/^PROMPT_COMMAND=bash_env_setup_prompt_command$/d' "${config_file}"
 }
 
-remove_vim_block() {
-    local config_file="$1"
-
-    [[ -f "${config_file}" ]] || return 0
-    sed -i "/${VIM_BLOCK_START}/,/${VIM_BLOCK_END}/d" "${config_file}"
-}
-
-write_vim_block() {
-    local config_file="$1"
-
-    touch "${config_file}"
-
-    {
-        echo "${VIM_BLOCK_START}"
-        cat <<'EOF'
-set nu
-set cursorline
-set tabstop=4
-set shiftwidth=4
-set t_Co=256
-
-" Color configuration
-set background=dark
-hi LineNr cterm=bold ctermfg=Gray ctermbg=NONE
-hi CursorLineNr cterm=bold ctermfg=Green ctermbg=NONE
-
-highlight DiffAdd    cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
-highlight DiffDelete cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
-highlight DiffChange cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
-highlight DiffText   cterm=bold ctermfg=10 ctermbg=88 gui=none guifg=bg guibg=Red
-EOF
-        echo "${VIM_BLOCK_END}"
-    } >> "${config_file}"
-}
-
-install_vim_config() {
-    local vimrc
-
-    vimrc="$HOME/.vimrc"
-
-    remove_vim_block "${vimrc}"
-    write_vim_block "${vimrc}"
-}
-
 write_prompt_block() {
     local config_file="$1"
     local prompt_file="$2"
     local host_token="$3"
 
     {
-        echo
         echo "${PROMPT_BLOCK_START}"
         printf 'if [ -f %q ]; then\n' "${prompt_file}"
         printf '    source %q\n' "${prompt_file}"
@@ -200,6 +152,9 @@ main() {
 
     touch "$HOME/.bashrc"
     install_prompt "$HOME/.bashrc" "${prompt_file}" '\h'
+
+    # shellcheck source=vim_setup.sh
+    source "${script_dir}/vim_setup.sh"
     install_vim_config
 }
 

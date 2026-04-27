@@ -4,64 +4,54 @@ This directory contains scripts to configure your shell prompt and Vim environme
 
 ## Scripts
 
-### `env_setup.sh`
+### `bash_setup.sh`
 
-Configures the shell environment (Bash) to include a Git-aware prompt.
+Configures the Bash shell with a Git-aware prompt and writes a managed Vim block.
 
 **Usage:**
 
 This script **must be sourced** to work correctly.
 
 ```bash
-source env_setup.sh [mode]
+source bash_setup.sh
 ```
 
-- **Default mode:**
-  ```bash
-  source env_setup.sh
-  ```
-  This will:
-  1. Copy `git_prompt.sh` to `~/.local/`.
-  2. Install a managed prompt block in your `.bashrc`.
-  3. Reload the prompt configuration in the current shell.
-
-- **Alibaba mode (`ali`):**
-  ```bash
-  sudo source env_setup.sh ali
-  ```
-  *Note: This mode requires root privileges as it modifies `/etc/profile.d/alibaba_bashenv.sh`.*
+This will:
+1. Copy `git_prompt.sh` to `~/.local/`.
+2. Install a managed prompt block in your `.bashrc`.
+3. Source `vim_setup.sh` to write managed Vim settings to `~/.vimrc`.
+4. Reload the prompt configuration in the current shell.
 
 ### `vim_setup.sh`
 
-Installs the [Ultimate Vim Configuration](https://github.com/amix/vimrc) (Awesome version) and applies custom settings.
+Writes a managed Vim settings block to `~/.vimrc`. Shell-independent;
+sourced by both `bash_setup.sh` and `fish_setup.sh` so a Vim config is
+installed regardless of which setup script you run.
 
 **Usage:**
 
 ```bash
-./vim_setup.sh
+bash vim_setup.sh           # write the vim block standalone
+source vim_setup.sh         # expose install_vim_config in the current shell
 ```
-
-This will:
-1. Clone or update `~/.vim_runtime`.
-2. Run the `install_awesome_vimrc.sh` script.
-3. Apply custom configurations to `~/.vim_runtime/my_configs.vim`.
 
 ### `fish_setup.sh`
 
 Installs the [fish](https://fishshell.com/) shell and configures
 interactive bash sessions to automatically `exec` into fish.
 
-This script is intentionally separate from `env_setup.sh` since fish
+This script is intentionally separate from `bash_setup.sh` since fish
 may not be available on every machine.
 
 **Usage:**
 
 ```bash
-bash fish_setup.sh                     # install fish + auto-enter + prompt + colors (default)
+bash fish_setup.sh                     # install fish + auto-enter + prompt + colors + vim (default)
 bash fish_setup.sh install             # install fish only
 bash fish_setup.sh autostart           # configure auto-enter only
 bash fish_setup.sh prompt              # install prompt block only
 bash fish_setup.sh colors              # install color overrides only
+bash fish_setup.sh vim                 # install vim block only
 bash fish_setup.sh uninstall-autostart # remove the auto-enter block
 bash fish_setup.sh uninstall-prompt    # remove the prompt block
 bash fish_setup.sh uninstall-colors    # remove the color block
@@ -82,4 +72,4 @@ The auto-enter block in `~/.bashrc` is guarded so it:
 
 ### `git_prompt.sh`
 
-A helper script that provides the Git status logic for the shell prompt. It is used by `env_setup.sh`.
+A helper script that provides the Git status logic for the shell prompt. It is used by `bash_setup.sh`.

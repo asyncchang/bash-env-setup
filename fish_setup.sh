@@ -12,11 +12,12 @@ FISH_COLORS_BLOCK_END="# <<< bash-env-setup fish-colors <<<"
 print_help() {
     cat <<EOF
 Usage:
-  bash fish_setup.sh                # install fish + auto-enter + prompt + colors
+  bash fish_setup.sh                # install fish + auto-enter + prompt + colors + vim
   bash fish_setup.sh install        # install fish only
   bash fish_setup.sh autostart      # configure auto-enter only
   bash fish_setup.sh prompt         # install fish prompt config only
   bash fish_setup.sh colors         # install fish color overrides only
+  bash fish_setup.sh vim            # install vim config only
   bash fish_setup.sh uninstall-autostart
                                     # remove the auto-enter block from ~/.bashrc
   bash fish_setup.sh uninstall-prompt
@@ -117,7 +118,6 @@ write_fish_block() {
     local config_file="$1"
 
     {
-        echo
         echo "${FISH_BLOCK_START}"
         cat <<'EOF'
 # Auto-exec fish for interactive shells. Skips when:
@@ -167,7 +167,6 @@ write_fish_prompt_block() {
     local config_file="$1"
 
     {
-        echo
         echo "${FISH_PROMPT_BLOCK_START}"
         cat <<'EOF'
 # Mirror fish's default fish_prompt but show the full $PWD and put the
@@ -236,7 +235,6 @@ write_fish_colors_block() {
     local config_file="$1"
 
     {
-        echo
         echo "${FISH_COLORS_BLOCK_START}"
         cat <<'EOF'
 # Override fish's default syntax-highlighting and pager colors that
@@ -284,6 +282,15 @@ uninstall_fish_colors() {
     echo "fish color block removed from ${config_file}"
 }
 
+install_vim() {
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    # shellcheck source=vim_setup.sh
+    source "${script_dir}/vim_setup.sh"
+    install_vim_config
+}
+
 main() {
     local mode="${1:-all}"
 
@@ -303,6 +310,9 @@ main() {
         colors)
             install_fish_colors
             ;;
+        vim)
+            install_vim
+            ;;
         uninstall-autostart)
             uninstall_autostart
             ;;
@@ -317,6 +327,7 @@ main() {
             install_autostart
             install_fish_prompt
             install_fish_colors
+            install_vim
             ;;
         *)
             echo "Error: unknown mode '${mode}'" >&2
