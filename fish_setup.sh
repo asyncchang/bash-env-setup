@@ -4,15 +4,20 @@ set -e
 
 FISH_BLOCK_START="# >>> bash-env-setup fish-autostart >>>"
 FISH_BLOCK_END="# <<< bash-env-setup fish-autostart <<<"
+FISH_PROMPT_BLOCK_START="# >>> bash-env-setup fish-prompt >>>"
+FISH_PROMPT_BLOCK_END="# <<< bash-env-setup fish-prompt <<<"
 
 print_help() {
     cat <<EOF
 Usage:
-  bash fish_setup.sh                # install fish + configure auto-enter
+  bash fish_setup.sh                # install fish + configure auto-enter + prompt
   bash fish_setup.sh install        # install fish only
   bash fish_setup.sh autostart      # configure auto-enter only
+  bash fish_setup.sh prompt         # install fish prompt config only
   bash fish_setup.sh uninstall-autostart
                                     # remove the auto-enter block from ~/.bashrc
+  bash fish_setup.sh uninstall-prompt
+                                    # remove the prompt block from ~/.config/fish/config.fish
   bash fish_setup.sh [--help|-h]
 
 Description:
@@ -30,6 +35,11 @@ Auto-enter behavior:
     - parent process is fish (avoids recursion)
     - BASH_ENV_SETUP_NO_FISH is set (escape hatch)
     - fish is not on PATH
+
+Prompt behavior:
+  Adds a managed block to ~/.config/fish/config.fish that defines
+  fish_prompt to show user@host, the full \$PWD, git status, and
+  puts the input on a new line.
 EOF
 }
 
@@ -134,6 +144,75 @@ uninstall_autostart() {
     echo "fish auto-enter block removed from ${config_file}"
 }
 
+remove_fish_prompt_block() {
+    local config_file="$1"
+
+    [[ -f "${config_file}" ]] || return 0
+    sed -i "/${FISH_PROMPT_BLOCK_START}/,/${FISH_PROMPT_BLOCK_END}/d" "${config_file}"
+}
+
+write_fish_prompt_block() {
+    local config_file="$1"
+
+    {
+        echo
+        echo "${FISH_PROMPT_BLOCK_START}"
+        cat <<'EOF'
+# Mirror fish's default fish_prompt but show the full $PWD and put the
+# input on a new line. Keeps the default colors, user@host layout, and
+# vcs/status segments untouched.
+function fish_prompt --description 'bash-env-setup: default prompt + full path + newline'
+    set -l last_pipestatus $pipestatus
+    set -lx __fish_last_status $status
+
+    if not set -q __fish_prompt_hostname
+        set -g __fish_prompt_hostname (prompt_hostname)
+    end
+
+    set -l color_cwd
+    set -l suffix
+    switch "$USER"
+        case root toor
+            if set -q fish_color_cwd_root
+                set color_cwd $fish_color_cwd_root
+            else
+                set color_cwd $fish_color_cwd
+            end
+            set suffix '#'
+        case '*'
+            set color_cwd $fish_color_cwd
+            set suffix '>'
+    end
+
+    set -l prompt_status (__fish_print_pipestatus " [" "]" "|" (set_color $fish_color_status) (set_color --bold $fish_color_status) $last_pipestatus)
+
+    echo -n -s (set_color $fish_color_user) "$USER" (set_color normal) @ (set_color $fish_color_host) $__fish_prompt_hostname (set_color normal) ' ' (set_color $color_cwd) $PWD (set_color normal) (fish_vcs_prompt) $prompt_status
+    echo
+    echo -n "$suffix "
+end
+EOF
+        echo "${FISH_PROMPT_BLOCK_END}"
+    } >> "${config_file}"
+}
+
+install_fish_prompt() {
+    local config_dir="$HOME/.config/fish"
+    local config_file="${config_dir}/config.fish"
+
+    mkdir -p "${config_dir}"
+    touch "${config_file}"
+    remove_fish_prompt_block "${config_file}"
+    write_fish_prompt_block "${config_file}"
+    echo "fish prompt block installed in ${config_file}"
+}
+
+uninstall_fish_prompt() {
+    local config_file="$HOME/.config/fish/config.fish"
+
+    remove_fish_prompt_block "${config_file}"
+    echo "fish prompt block removed from ${config_file}"
+}
+
 main() {
     local mode="${1:-all}"
 
@@ -147,12 +226,19 @@ main() {
         autostart)
             install_autostart
             ;;
+        prompt)
+            install_fish_prompt
+            ;;
         uninstall-autostart)
             uninstall_autostart
+            ;;
+        uninstall-prompt)
+            uninstall_fish_prompt
             ;;
         all|"")
             install_fish
             install_autostart
+            install_fish_prompt
             ;;
         *)
             echo "Error: unknown mode '${mode}'" >&2
