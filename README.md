@@ -57,11 +57,19 @@ may not be available on every machine.
 **Usage:**
 
 ```bash
-bash fish_setup.sh                     # install fish + configure auto-enter (default)
+bash fish_setup.sh                     # install fish + auto-enter + prompt + colors (default)
 bash fish_setup.sh install             # install fish only
 bash fish_setup.sh autostart           # configure auto-enter only
+bash fish_setup.sh prompt              # install prompt block only
+bash fish_setup.sh colors              # install color overrides only
 bash fish_setup.sh uninstall-autostart # remove the auto-enter block
+bash fish_setup.sh uninstall-prompt    # remove the prompt block
+bash fish_setup.sh uninstall-colors    # remove the color block
 ```
+
+The color block overrides fish's default syntax-highlighting and pager
+colors that lean blue/cyan, so commands stay readable on dark
+backgrounds (e.g. WSL Ubuntu's default theme).
 
 Supported package managers: `apt-get`, `dnf`, `yum`, `apk`, `pacman`,
 `zypper`, `brew`. `sudo` is used automatically when not running as root.
