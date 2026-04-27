@@ -46,6 +46,32 @@ This will:
 2. Run the `install_awesome_vimrc.sh` script.
 3. Apply custom configurations to `~/.vim_runtime/my_configs.vim`.
 
+### `fish_setup.sh`
+
+Installs the [fish](https://fishshell.com/) shell and configures
+interactive bash sessions to automatically `exec` into fish.
+
+This script is intentionally separate from `env_setup.sh` since fish
+may not be available on every machine.
+
+**Usage:**
+
+```bash
+bash fish_setup.sh                     # install fish + configure auto-enter (default)
+bash fish_setup.sh install             # install fish only
+bash fish_setup.sh autostart           # configure auto-enter only
+bash fish_setup.sh uninstall-autostart # remove the auto-enter block
+```
+
+Supported package managers: `apt-get`, `dnf`, `yum`, `apk`, `pacman`,
+`zypper`, `brew`. `sudo` is used automatically when not running as root.
+
+The auto-enter block in `~/.bashrc` is guarded so it:
+- only runs for interactive shells,
+- skips when the parent process is fish (no recursion),
+- skips when `BASH_ENV_SETUP_NO_FISH` is set (escape hatch — e.g. `BASH_ENV_SETUP_NO_FISH=1 bash`),
+- silently no-ops when fish is not on `PATH`.
+
 ### `git_prompt.sh`
 
 A helper script that provides the Git status logic for the shell prompt. It is used by `env_setup.sh`.
