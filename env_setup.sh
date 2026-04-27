@@ -117,7 +117,7 @@ write_prompt_block() {
     if [ -x /usr/bin/dircolors ]; then
         eval "\$(dircolors -b)"
     fi
-    export LS_COLORS="\${LS_COLORS}:di=01;94"
+    export LS_COLORS="\${LS_COLORS}:di=38;5;37"
 
     bash_env_setup_prompt_command() {
         local last_status=\$?
