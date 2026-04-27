@@ -50,6 +50,9 @@ Color behavior:
   Adds a managed block to ~/.config/fish/config.fish that overrides
   fish's blue/cyan-leaning syntax-highlighting and pager defaults so
   text stays readable on dark backgrounds (e.g. WSL Ubuntu's theme).
+  Also overwrites LS_COLORS to match env_setup.sh: regenerates the
+  base map via dircolors then sets directories teal and symlinks
+  orange so they're distinguishable on dark backgrounds.
 EOF
 }
 
@@ -252,6 +255,13 @@ set -g fish_color_search_match bryellow --background=brblack
 set -g fish_pager_color_prefix brgreen --bold
 set -g fish_pager_color_progress brwhite --background=brblack
 set -g fish_pager_color_selected_background --background=brblack
+
+# Mirror env_setup.sh's bash prompt block: regenerate LS_COLORS via
+# dircolors then set directories teal and symlinks orange.
+if type -q dircolors
+    set -gx LS_COLORS (dircolors -c | string replace -r "^setenv LS_COLORS '(.*)'\$" '$1')
+end
+set -gx LS_COLORS "$LS_COLORS:di=38;5;37:ln=38;5;215"
 EOF
         echo "${FISH_COLORS_BLOCK_END}"
     } >> "${config_file}"
