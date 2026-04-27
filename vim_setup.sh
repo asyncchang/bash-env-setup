@@ -17,15 +17,22 @@ EOF
 
 remove_vim_block() {
     local config_file="$1"
+    local output_file="$2"
 
-    [[ -f "${config_file}" ]] || return 0
-    sed -i "/${VIM_BLOCK_START}/,/${VIM_BLOCK_END}/d" "${config_file}"
+    if [[ ! -f "${config_file}" ]]; then
+        : > "${output_file}"
+        return 0
+    fi
+
+    awk -v start="${VIM_BLOCK_START}" -v end="${VIM_BLOCK_END}" '
+        $0 == start { skip = 1; next }
+        $0 == end { skip = 0; next }
+        !skip { print }
+    ' "${config_file}" > "${output_file}"
 }
 
 write_vim_block() {
     local config_file="$1"
-
-    touch "${config_file}"
 
     {
         echo "${VIM_BLOCK_START}"
@@ -50,14 +57,44 @@ EOF
     } >> "${config_file}"
 }
 
+acquire_vim_lock() {
+    local lock_dir="$1"
+    local wait_seconds=0
+
+    while ! mkdir "${lock_dir}" 2>/dev/null; do
+        ((wait_seconds++))
+        if (( wait_seconds >= 30 )); then
+            echo "Error: timed out waiting for Vim config lock at ${lock_dir}" >&2
+            return 1
+        fi
+        sleep 1
+    done
+}
+
 install_vim_config() {
-    local vimrc
+    local vimrc lock_dir temp_file status
 
     vimrc="$HOME/.vimrc"
+    lock_dir="${vimrc}.bash-env-setup.lock"
+    temp_file="$(mktemp "${vimrc}.XXXXXX.tmp")"
 
-    remove_vim_block "${vimrc}"
-    write_vim_block "${vimrc}"
-    echo "vim block installed in ${vimrc}"
+    acquire_vim_lock "${lock_dir}" || return 1
+
+    status=0
+
+    if ! remove_vim_block "${vimrc}" "${temp_file}"; then
+        status=1
+    elif ! write_vim_block "${temp_file}"; then
+        status=1
+    elif ! mv "${temp_file}" "${vimrc}"; then
+        status=1
+    else
+        echo "vim block installed in ${vimrc}"
+    fi
+
+    rm -f "${temp_file}"
+    rmdir "${lock_dir}" 2>/dev/null
+    return "${status}"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
