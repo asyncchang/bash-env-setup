@@ -70,9 +70,9 @@ if [ -x /usr/bin/dircolors ]; then
 fi
 
 case ":${LS_COLORS:-}:" in
-    *":di=38;5;37:ln=38;5;215:"*) ;;
+    *":di=1;38;5;51:ln=1;38;5;214:"*) ;;
     *)
-        export LS_COLORS="${LS_COLORS:+${LS_COLORS}:}di=38;5;37:ln=38;5;215"
+        export LS_COLORS="${LS_COLORS:+${LS_COLORS}:}di=1;38;5;51:ln=1;38;5;214"
         ;;
 esac
 EOF
@@ -131,17 +131,19 @@ write_prompt_block() {
                 ;;
         esac
 
-        local user_host='\\[\\e[1;32m\\]\\u@${host_token}\\[\\e[0m\\]'
-        local cwd='\\[\\e[1;36m\\]\\w\\[\\e[0m\\]'
-        local git='\\[\\e[1;33m\\]'
+        local user='\\[\\e[1;38;5;120m\\]\\u\\[\\e[0m\\]'
+        local host='\\[\\e[1;38;5;201m\\]@${host_token}\\[\\e[0m\\]'
+        local cwd='\\[\\e[1;38;5;51m\\]\\w\\[\\e[0m\\]'
+        local git='\\[\\e[1;38;5;220m\\]'
+        local time_color='\\[\\e[1;38;5;250m\\]'
         local reset='\\[\\e[0m\\]'
         local right_time
         local right_prompt
 
         right_time="\$(date +%H:%M:%S)"
-        right_prompt="\\[\\e[s\\]\\[\\e[999C\\]\\[\\e[8D\\]\${right_time}\\[\\e[u\\]"
+        right_prompt="\\[\\e[s\\]\\[\\e[999C\\]\\[\\e[8D\\]\${time_color}\${right_time}\${reset}\\[\\e[u\\]"
 
-        __git_ps1 "\${title}\${chroot}\${user_host} \${cwd}\${git}" "\${reset}\${right_prompt}\n\\\\\\$ "
+        __git_ps1 "\${title}\${chroot}\${user}\${host} \${cwd}\${git}" "\${reset}\${right_prompt}\n\\\\\\$ "
         return \$last_status
     }
 

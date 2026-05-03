@@ -49,15 +49,17 @@ set tabstop=4
 set shiftwidth=4
 set t_Co=256
 
-" Color configuration
+" Color configuration tuned for WSL Ubuntu's dark terminal palette.
 set background=dark
-hi LineNr cterm=bold ctermfg=Gray ctermbg=NONE
-hi CursorLineNr cterm=bold ctermfg=Green ctermbg=NONE
+hi Normal ctermfg=White ctermbg=NONE
+hi LineNr cterm=bold ctermfg=LightGrey ctermbg=NONE
+hi CursorLineNr cterm=bold ctermfg=LightGreen ctermbg=NONE
+hi CursorLine cterm=NONE ctermbg=236
 
-highlight DiffAdd    cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
-highlight DiffDelete cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
-highlight DiffChange cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
-highlight DiffText   cterm=bold ctermfg=10 ctermbg=88 gui=none guifg=bg guibg=Red
+highlight DiffAdd    cterm=bold ctermfg=Black ctermbg=LightGreen gui=none
+highlight DiffDelete cterm=bold ctermfg=White ctermbg=DarkRed gui=none
+highlight DiffChange cterm=bold ctermfg=Black ctermbg=LightYellow gui=none
+highlight DiffText   cterm=bold ctermfg=Black ctermbg=Yellow gui=none
 EOF
         echo "${VIM_BLOCK_END}"
     } >> "${config_file}"

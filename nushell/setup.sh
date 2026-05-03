@@ -123,7 +123,7 @@ if (which dircolors | is-not-empty) {
     }
 }
 
-let shell_env_ls_colors_suffix = "di=38;5;37:ln=38;5;215"
+let shell_env_ls_colors_suffix = "di=1;38;5;51:ln=1;38;5;214"
 let shell_env_ls_colors = ($env.LS_COLORS? | default "")
 
 if not ($shell_env_ls_colors | str contains $shell_env_ls_colors_suffix) {
@@ -205,16 +205,16 @@ def shell_env_git_prompt [] {
         $"($ref) ($flags)"
     }
 
-    $"(ansi yellow) (($decorated_ref))(ansi reset)"
+    $"(ansi yellow_bold) (($decorated_ref))(ansi reset)"
 }
 
 $env.PROMPT_COMMAND = {||
     let user = ($env.USER? | default "")
     let host = (do --ignore-errors { hostname } | str trim)
-    $"(ansi green)($user)@($host)(ansi reset) (ansi cyan)($env.PWD)(ansi reset)(shell_env_git_prompt)\n"
+    $"(ansi light_green_bold)($user)(ansi reset)(ansi magenta_bold)@($host)(ansi reset) (ansi cyan_bold)($env.PWD)(ansi reset)(shell_env_git_prompt)\n"
 }
 
-$env.PROMPT_COMMAND_RIGHT = {|| date now | format date "%H:%M:%S" }
+$env.PROMPT_COMMAND_RIGHT = {|| $"(ansi white_bold)(date now | format date "%H:%M:%S")(ansi reset)" }
 $env.PROMPT_INDICATOR = "> "
 EOF
         echo "${NUSHELL_PROMPT_BLOCK_END}"
