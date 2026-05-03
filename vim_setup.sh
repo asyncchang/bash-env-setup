@@ -1,7 +1,9 @@
 #!/bin/bash
 
-VIM_BLOCK_START="\" >>> bash-env-setup vim >>>"
-VIM_BLOCK_END="\" <<< bash-env-setup vim <<<"
+VIM_BLOCK_START="\" >>> shell-env vim >>>"
+VIM_BLOCK_END="\" <<< shell-env vim <<<"
+LEGACY_VIM_BLOCK_START="\" >>> bash-env-setup vim >>>"
+LEGACY_VIM_BLOCK_END="\" <<< bash-env-setup vim <<<"
 
 vim_print_help() {
     cat <<EOF
@@ -11,7 +13,7 @@ Usage:
 
 Description:
   Writes a managed Vim settings block to ~/.vimrc. Shell-independent;
-  used by both bash_setup.sh and fish_setup.sh.
+  used by bash/setup.sh, fish/setup.sh, and nushell/setup.sh.
 EOF
 }
 
@@ -24,9 +26,13 @@ remove_vim_block() {
         return 0
     fi
 
-    awk -v start="${VIM_BLOCK_START}" -v end="${VIM_BLOCK_END}" '
-        $0 == start { skip = 1; next }
-        $0 == end { skip = 0; next }
+    awk \
+        -v start="${VIM_BLOCK_START}" \
+        -v end="${VIM_BLOCK_END}" \
+        -v legacy_start="${LEGACY_VIM_BLOCK_START}" \
+        -v legacy_end="${LEGACY_VIM_BLOCK_END}" '
+        $0 == start || $0 == legacy_start { skip = 1; next }
+        $0 == end || $0 == legacy_end { skip = 0; next }
         !skip { print }
     ' "${config_file}" > "${output_file}"
 }
@@ -75,7 +81,7 @@ install_vim_config() {
     local vimrc lock_dir temp_file status
 
     vimrc="$HOME/.vimrc"
-    lock_dir="${vimrc}.bash-env-setup.lock"
+    lock_dir="${vimrc}.shell-env.lock"
     temp_file="$(mktemp "${vimrc}.XXXXXX.tmp")"
 
     acquire_vim_lock "${lock_dir}" || return 1

@@ -2,39 +2,47 @@
 
 set -e
 
-FISH_PATH_BLOCK_START="# >>> bash-env-setup fish-path >>>"
-FISH_PATH_BLOCK_END="# <<< bash-env-setup fish-path <<<"
-FISH_PROMPT_BLOCK_START="# >>> bash-env-setup fish-prompt >>>"
-FISH_PROMPT_BLOCK_END="# <<< bash-env-setup fish-prompt <<<"
-FISH_COLORS_BLOCK_START="# >>> bash-env-setup fish-colors >>>"
-FISH_COLORS_BLOCK_END="# <<< bash-env-setup fish-colors <<<"
+FISH_ENV_BLOCK_START="# >>> shell-env fish-env >>>"
+FISH_ENV_BLOCK_END="# <<< shell-env fish-env <<<"
+LEGACY_FISH_ENV_BLOCK_START="# >>> bash-env-setup fish-env >>>"
+LEGACY_FISH_ENV_BLOCK_END="# <<< bash-env-setup fish-env <<<"
+LEGACY_FISH_PATH_BLOCK_START="# >>> bash-env-setup fish-path >>>"
+LEGACY_FISH_PATH_BLOCK_END="# <<< bash-env-setup fish-path <<<"
+FISH_PROMPT_BLOCK_START="# >>> shell-env fish-prompt >>>"
+FISH_PROMPT_BLOCK_END="# <<< shell-env fish-prompt <<<"
+LEGACY_FISH_PROMPT_BLOCK_START="# >>> bash-env-setup fish-prompt >>>"
+LEGACY_FISH_PROMPT_BLOCK_END="# <<< bash-env-setup fish-prompt <<<"
+FISH_COLORS_BLOCK_START="# >>> shell-env fish-colors >>>"
+FISH_COLORS_BLOCK_END="# <<< shell-env fish-colors <<<"
+LEGACY_FISH_COLORS_BLOCK_START="# >>> bash-env-setup fish-colors >>>"
+LEGACY_FISH_COLORS_BLOCK_END="# <<< bash-env-setup fish-colors <<<"
 
 print_help() {
     cat <<EOF
 Usage:
-  bash fish_setup.sh                # install fish + path + prompt + colors + vim
-  bash fish_setup.sh install        # install fish only
-  bash fish_setup.sh path           # install fish PATH block only
-  bash fish_setup.sh prompt         # install fish prompt config only
-  bash fish_setup.sh colors         # install fish color overrides only
-  bash fish_setup.sh vim            # install vim config only
-  bash fish_setup.sh uninstall-path
-                                    # remove the PATH block from ~/.config/fish/config.fish
-  bash fish_setup.sh uninstall-prompt
-                                    # remove the prompt block from ~/.config/fish/config.fish
-  bash fish_setup.sh uninstall-colors
-                                    # remove the color block from ~/.config/fish/config.fish
-  bash fish_setup.sh [--help|-h]
+  bash fish/setup.sh                # install fish + env + prompt + colors + vim
+  bash fish/setup.sh install        # install fish only
+  bash fish/setup.sh env            # install fish env block only
+  bash fish/setup.sh path           # alias for env
+  bash fish/setup.sh prompt         # install fish prompt config only
+  bash fish/setup.sh colors         # install fish color overrides only
+  bash fish/setup.sh vim            # install vim config only
+  bash fish/setup.sh uninstall-env  # remove the env block
+  bash fish/setup.sh uninstall-path # alias for uninstall-env
+  bash fish/setup.sh uninstall-prompt
+  bash fish/setup.sh uninstall-colors
+  bash fish/setup.sh [--help|-h]
 
 Description:
-  Installs the fish shell plus optional PATH, prompt, color, and vim config.
+  Installs the fish shell plus optional env, prompt, color, and vim config.
 
 Supported package managers:
   apt-get, dnf, yum, apk, pacman, zypper, brew
 
-PATH behavior:
+Env behavior:
   Adds a managed block to ~/.config/fish/config.fish that prepends
-  ~/.local/bin when it is not already present in PATH.
+  ~/.local/bin when it is not already present in PATH, sets EDITOR and
+  VISUAL to vim, and sets LS_COLORS.
 
 Prompt behavior:
   Adds a managed block to ~/.config/fish/config.fish that defines
@@ -45,9 +53,6 @@ Color behavior:
   Adds a managed block to ~/.config/fish/config.fish that overrides
   fish's blue/cyan-leaning syntax-highlighting and pager defaults so
   text stays readable on dark backgrounds (e.g. WSL Ubuntu's theme).
-  Also sets LS_COLORS: regenerates the base map via dircolors then
-  sets directories teal and symlinks orange so they're distinguishable
-  on dark backgrounds.
 EOF
 }
 
@@ -107,45 +112,64 @@ remove_fish_prompt_block() {
 
     [[ -f "${config_file}" ]] || return 0
     sed -i "/${FISH_PROMPT_BLOCK_START}/,/${FISH_PROMPT_BLOCK_END}/d" "${config_file}"
+    sed -i "/${LEGACY_FISH_PROMPT_BLOCK_START}/,/${LEGACY_FISH_PROMPT_BLOCK_END}/d" "${config_file}"
 }
 
-remove_fish_path_block() {
+remove_fish_env_block() {
     local config_file="$1"
 
     [[ -f "${config_file}" ]] || return 0
-    sed -i "/${FISH_PATH_BLOCK_START}/,/${FISH_PATH_BLOCK_END}/d" "${config_file}"
+    sed -i "/${FISH_ENV_BLOCK_START}/,/${FISH_ENV_BLOCK_END}/d" "${config_file}"
+    sed -i "/${LEGACY_FISH_ENV_BLOCK_START}/,/${LEGACY_FISH_ENV_BLOCK_END}/d" "${config_file}"
+    sed -i "/${LEGACY_FISH_PATH_BLOCK_START}/,/${LEGACY_FISH_PATH_BLOCK_END}/d" "${config_file}"
 }
 
-write_fish_path_block() {
+write_fish_env_block() {
     local config_file="$1"
 
     {
-        echo "${FISH_PATH_BLOCK_START}"
+        echo "${FISH_ENV_BLOCK_START}"
         cat <<'EOF'
 if not contains -- "$HOME/.local/bin" $PATH
     set -gx PATH "$HOME/.local/bin" $PATH
 end
+
+set -gx EDITOR vim
+set -gx VISUAL vim
+
+if type -q dircolors
+    set -gx LS_COLORS (dircolors -c | string replace -r "^setenv LS_COLORS '(.*)'\$" '$1')
+end
+
+set -l shell_env_ls_colors_suffix "di=38;5;37:ln=38;5;215"
+if not string match -q "*$shell_env_ls_colors_suffix*" "$LS_COLORS"
+    if test -n "$LS_COLORS"
+        set -gx LS_COLORS "$LS_COLORS:$shell_env_ls_colors_suffix"
+    else
+        set -gx LS_COLORS "$shell_env_ls_colors_suffix"
+    end
+end
 EOF
-        echo "${FISH_PATH_BLOCK_END}"
+        echo "${FISH_ENV_BLOCK_END}"
     } >> "${config_file}"
 }
 
-install_fish_path() {
+install_fish_env() {
     local config_dir="$HOME/.config/fish"
     local config_file="${config_dir}/config.fish"
 
     mkdir -p "${config_dir}"
     touch "${config_file}"
-    remove_fish_path_block "${config_file}"
-    write_fish_path_block "${config_file}"
-    echo "fish PATH block installed in ${config_file}"
+    remove_fish_env_block "${config_file}"
+    write_fish_env_block "${config_file}"
+    echo "fish env block installed in ${config_file}"
 }
 
-uninstall_fish_path() {
+uninstall_fish_env() {
     local config_file="$HOME/.config/fish/config.fish"
 
-    remove_fish_path_block "${config_file}"
-    echo "fish PATH block removed from ${config_file}"
+    remove_fish_env_block "${config_file}"
+    echo "fish env block removed from ${config_file}"
 }
 
 write_fish_prompt_block() {
@@ -157,7 +181,7 @@ write_fish_prompt_block() {
 # Mirror fish's default fish_prompt but show the full $PWD and put the
 # input on a new line. Keeps the default colors, user@host layout, and
 # vcs/status segments untouched.
-function fish_prompt --description 'bash-env-setup: default prompt + full path + newline'
+function fish_prompt --description 'shell-env: default prompt + full path + newline'
     set -l last_pipestatus $pipestatus
     set -lx __fish_last_status $status
 
@@ -214,6 +238,7 @@ remove_fish_colors_block() {
 
     [[ -f "${config_file}" ]] || return 0
     sed -i "/${FISH_COLORS_BLOCK_START}/,/${FISH_COLORS_BLOCK_END}/d" "${config_file}"
+    sed -i "/${LEGACY_FISH_COLORS_BLOCK_START}/,/${LEGACY_FISH_COLORS_BLOCK_END}/d" "${config_file}"
 }
 
 write_fish_colors_block() {
@@ -237,13 +262,6 @@ set -g fish_color_search_match bryellow --background=brblack
 set -g fish_pager_color_prefix brgreen --bold
 set -g fish_pager_color_progress brwhite --background=brblack
 set -g fish_pager_color_selected_background --background=brblack
-
-# Regenerate LS_COLORS via dircolors then set directories teal and
-# symlinks orange so they're distinguishable on dark backgrounds.
-if type -q dircolors
-    set -gx LS_COLORS (dircolors -c | string replace -r "^setenv LS_COLORS '(.*)'\$" '$1')
-end
-set -gx LS_COLORS "$LS_COLORS:di=38;5;37:ln=38;5;215"
 EOF
         echo "${FISH_COLORS_BLOCK_END}"
     } >> "${config_file}"
@@ -271,8 +289,8 @@ install_vim() {
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-    # shellcheck source=vim_setup.sh
-    source "${script_dir}/vim_setup.sh"
+    # shellcheck source=../vim_setup.sh
+    source "${script_dir}/../vim_setup.sh"
     install_vim_config
 }
 
@@ -286,8 +304,8 @@ main() {
         install)
             install_fish
             ;;
-        path)
-            install_fish_path
+        env|path)
+            install_fish_env
             ;;
         prompt)
             install_fish_prompt
@@ -298,8 +316,8 @@ main() {
         vim)
             install_vim
             ;;
-        uninstall-path)
-            uninstall_fish_path
+        uninstall-env|uninstall-path)
+            uninstall_fish_env
             ;;
         uninstall-prompt)
             uninstall_fish_prompt
@@ -309,7 +327,7 @@ main() {
             ;;
         all|"")
             install_fish
-            install_fish_path
+            install_fish_env
             install_fish_prompt
             install_fish_colors
             install_vim

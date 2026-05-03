@@ -3,16 +3,16 @@
 print_help() {
     cat <<EOF
 Usage:
-  source bash_setup.sh
-  source bash_setup.sh [--help|-h]
-  bash bash_setup.sh [--help|-h]
+  source bash/setup.sh
+  source bash/setup.sh [--help|-h]
+  bash bash/setup.sh [--help|-h]
 
 Description:
-  Installs managed Bash PATH and prompt configuration and writes managed Vim settings.
+  Installs managed Bash environment and prompt configuration and writes managed Vim settings.
 
 Behavior:
   - Copies git_prompt.sh to ~/.local/git_prompt.sh
-  - Installs a managed PATH block in ~/.bashrc to prepend ~/.local/bin
+  - Installs a managed env block in ~/.bashrc for PATH, EDITOR, VISUAL, and LS_COLORS
   - Installs a managed prompt block in ~/.bashrc by default
   - Writes managed Vim settings to ~/.vimrc
 EOF
@@ -30,22 +30,30 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     exit 1
 fi
 
-PATH_BLOCK_START="# >>> bash-env-setup path >>>"
-PATH_BLOCK_END="# <<< bash-env-setup path <<<"
-PROMPT_BLOCK_START="# >>> bash-env-setup prompt >>>"
-PROMPT_BLOCK_END="# <<< bash-env-setup prompt <<<"
+BASH_ENV_BLOCK_START="# >>> shell-env bash-env >>>"
+BASH_ENV_BLOCK_END="# <<< shell-env bash-env <<<"
+LEGACY_BASH_ENV_BLOCK_START="# >>> bash-env-setup bash-env >>>"
+LEGACY_BASH_ENV_BLOCK_END="# <<< bash-env-setup bash-env <<<"
+LEGACY_PATH_BLOCK_START="# >>> bash-env-setup path >>>"
+LEGACY_PATH_BLOCK_END="# <<< bash-env-setup path <<<"
+PROMPT_BLOCK_START="# >>> shell-env bash-prompt >>>"
+PROMPT_BLOCK_END="# <<< shell-env bash-prompt <<<"
+LEGACY_PROMPT_BLOCK_START="# >>> bash-env-setup prompt >>>"
+LEGACY_PROMPT_BLOCK_END="# <<< bash-env-setup prompt <<<"
 
-remove_path_block() {
+remove_env_block() {
     local config_file="$1"
 
-    sed -i "/${PATH_BLOCK_START}/,/${PATH_BLOCK_END}/d" "${config_file}"
+    sed -i "/${BASH_ENV_BLOCK_START}/,/${BASH_ENV_BLOCK_END}/d" "${config_file}"
+    sed -i "/${LEGACY_BASH_ENV_BLOCK_START}/,/${LEGACY_BASH_ENV_BLOCK_END}/d" "${config_file}"
+    sed -i "/${LEGACY_PATH_BLOCK_START}/,/${LEGACY_PATH_BLOCK_END}/d" "${config_file}"
 }
 
-write_path_block() {
+write_env_block() {
     local config_file="$1"
 
     {
-        echo "${PATH_BLOCK_START}"
+        echo "${BASH_ENV_BLOCK_START}"
         cat <<'EOF'
 case ":${PATH}:" in
     *":${HOME}/.local/bin:"*) ;;
@@ -53,8 +61,22 @@ case ":${PATH}:" in
         export PATH="${HOME}/.local/bin${PATH:+:${PATH}}"
         ;;
 esac
+
+export EDITOR="vim"
+export VISUAL="vim"
+
+if [ -x /usr/bin/dircolors ]; then
+    eval "$(dircolors -b)"
+fi
+
+case ":${LS_COLORS:-}:" in
+    *":di=38;5;37:ln=38;5;215:"*) ;;
+    *)
+        export LS_COLORS="${LS_COLORS:+${LS_COLORS}:}di=38;5;37:ln=38;5;215"
+        ;;
+esac
 EOF
-        echo "${PATH_BLOCK_END}"
+        echo "${BASH_ENV_BLOCK_END}"
     } >> "${config_file}"
 }
 
@@ -62,6 +84,7 @@ remove_prompt_block() {
     local config_file="$1"
 
     sed -i "/${PROMPT_BLOCK_START}/,/${PROMPT_BLOCK_END}/d" "${config_file}"
+    sed -i "/${LEGACY_PROMPT_BLOCK_START}/,/${LEGACY_PROMPT_BLOCK_END}/d" "${config_file}"
 }
 
 remove_legacy_prompt_config() {
@@ -77,6 +100,7 @@ remove_legacy_prompt_config() {
     sed -i '/^PS1=.*__git_ps1/d' "${config_file}"
     sed -i '/^export PS1=.*__git_ps1/d' "${config_file}"
     sed -i '/^PROMPT_COMMAND=bash_env_setup_prompt_command$/d' "${config_file}"
+    sed -i '/^PROMPT_COMMAND=shell_env_prompt_command$/d' "${config_file}"
 }
 
 write_prompt_block() {
@@ -92,12 +116,7 @@ write_prompt_block() {
     export GIT_PS1_SHOWDIRTYSTATE=1
     export GIT_PS1_SHOWUNTRACKEDFILES=1
 
-    if [ -x /usr/bin/dircolors ]; then
-        eval "\$(dircolors -b)"
-    fi
-    export LS_COLORS="\${LS_COLORS}:di=38;5;37:ln=38;5;215"
-
-    bash_env_setup_prompt_command() {
+    shell_env_prompt_command() {
         local last_status=\$?
         local chroot=""
         local title=""
@@ -122,9 +141,9 @@ write_prompt_block() {
     }
 
     case ";\${PROMPT_COMMAND:-};" in
-        *";bash_env_setup_prompt_command;"*) ;;
+        *";shell_env_prompt_command;"*) ;;
         *)
-            PROMPT_COMMAND="bash_env_setup_prompt_command\${PROMPT_COMMAND:+;\${PROMPT_COMMAND}}"
+            PROMPT_COMMAND="shell_env_prompt_command\${PROMPT_COMMAND:+;\${PROMPT_COMMAND}}"
             ;;
     esac
 fi
@@ -144,11 +163,11 @@ install_prompt() {
     source "${config_file}"
 }
 
-install_path() {
+install_env() {
     local config_file="$1"
 
-    remove_path_block "${config_file}"
-    write_path_block "${config_file}"
+    remove_env_block "${config_file}"
+    write_env_block "${config_file}"
 }
 
 copy_git_prompt() {
@@ -184,11 +203,11 @@ main() {
     copy_git_prompt "${script_dir}" "${local_dir}" || return 1
 
     touch "$HOME/.bashrc"
-    install_path "$HOME/.bashrc"
+    install_env "$HOME/.bashrc"
     install_prompt "$HOME/.bashrc" "${prompt_file}" '\h'
 
-    # shellcheck source=vim_setup.sh
-    source "${script_dir}/vim_setup.sh"
+    # shellcheck source=../vim_setup.sh
+    source "${script_dir}/../vim_setup.sh"
     install_vim_config
 }
 

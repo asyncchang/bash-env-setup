@@ -1,33 +1,101 @@
-# Environment Setup Scripts
+# Shell Env
 
-This directory contains scripts to configure your shell prompt and Vim environment.
+This directory contains scripts to configure Bash, Fish, Nushell, and Vim.
 
-## Scripts
+## Layout
 
-### `bash_setup.sh`
+- `bash/setup.sh`: Bash environment, prompt, and Vim setup.
+- `bash/git_prompt.sh`: Git prompt helper used by Bash.
+- `fish/setup.sh`: Fish installation, environment, prompt, colors, and Vim setup.
+- `nushell/setup.sh`: Nushell installation, environment, and Vim setup.
+- `vim_setup.sh`: shared Vim settings writer used by all shell setup scripts.
 
-Configures the Bash shell with a managed `PATH`, a Git-aware prompt, and a managed Vim block.
+Each shell setup aligns these environment variables:
+
+- `PATH`: prepends `~/.local/bin` when it is not already present.
+- `EDITOR`: set to `vim`.
+- `VISUAL`: set to `vim`.
+- `LS_COLORS`: uses `dircolors` when available, then sets directories to teal and symlinks to orange for dark terminals.
+
+All shell setup scripts write the same managed Vim settings block to `~/.vimrc`.
+
+## Activate Changes
+
+After running a setup script, you can activate the new shell settings in the
+current terminal without opening a new one:
+
+```bash
+source ~/.bashrc
+```
+
+```fish
+source ~/.config/fish/config.fish
+```
+
+```nu
+source ~/.config/nushell/env.nu
+```
+
+For Vim settings, reopen Vim or run `:source ~/.vimrc` inside Vim.
+
+## Bash
+
+Configures Bash with a managed environment block, a Git-aware prompt, and Vim settings.
 
 **Usage:**
 
 This script **must be sourced** to work correctly.
 
 ```bash
-source bash_setup.sh
+source bash/setup.sh
 ```
 
 This will:
-1. Copy `git_prompt.sh` to `~/.local/`.
-2. Install a managed PATH block in your `.bashrc` to prepend `~/.local/bin`.
-3. Install a managed prompt block in your `.bashrc`.
+1. Copy `bash/git_prompt.sh` to `~/.local/git_prompt.sh`.
+2. Install a managed environment block in `~/.bashrc`.
+3. Install a managed prompt block in `~/.bashrc`.
 4. Source `vim_setup.sh` to write managed Vim settings to `~/.vimrc`.
-5. Reload the prompt configuration in the current shell.
+5. Reload the configuration in the current shell.
 
-### `vim_setup.sh`
+## Fish
+
+Installs [fish](https://fishshell.com/) and can write managed environment, prompt, color, and Vim configuration blocks.
+
+```bash
+bash fish/setup.sh                     # install fish + env + prompt + colors + vim (default)
+bash fish/setup.sh install             # install fish only
+bash fish/setup.sh env                 # install env block only
+bash fish/setup.sh path                # alias for env
+bash fish/setup.sh prompt              # install prompt block only
+bash fish/setup.sh colors              # install color overrides only
+bash fish/setup.sh vim                 # install vim block only
+bash fish/setup.sh uninstall-env       # remove the env block
+bash fish/setup.sh uninstall-path      # alias for uninstall-env
+bash fish/setup.sh uninstall-prompt    # remove the prompt block
+bash fish/setup.sh uninstall-colors    # remove the color block
+```
+
+Fish config is written to `~/.config/fish/config.fish`.
+
+## Nushell
+
+Installs [Nushell](https://www.nushell.sh/) and can write managed environment and Vim configuration.
+
+```bash
+bash nushell/setup.sh                  # install nushell + env + vim (default)
+bash nushell/setup.sh install          # install nushell only
+bash nushell/setup.sh env              # install env block only
+bash nushell/setup.sh vim              # install vim block only
+bash nushell/setup.sh uninstall-env    # remove the env block
+```
+
+Nushell config is written to `~/.config/nushell/env.nu`.
+
+## Vim
 
 Writes a managed Vim settings block to `~/.vimrc`. Shell-independent;
-sourced by both `bash_setup.sh` and `fish_setup.sh` so a Vim config is
-installed regardless of which setup script you run.
+sourced by all shell setup scripts so a Vim config is installed regardless
+of which setup script you run.
 
 **Usage:**
 
@@ -36,38 +104,5 @@ bash vim_setup.sh           # write the vim block standalone
 source vim_setup.sh         # expose install_vim_config in the current shell
 ```
 
-### `fish_setup.sh`
-
-Installs the [fish](https://fishshell.com/) shell and can write managed
-PATH, prompt, color, and Vim configuration blocks.
-
-This script is intentionally separate from `bash_setup.sh` since fish
-may not be available on every machine.
-
-**Usage:**
-
-```bash
-bash fish_setup.sh                     # install fish + path + prompt + colors + vim (default)
-bash fish_setup.sh install             # install fish only
-bash fish_setup.sh path                # install PATH block only
-bash fish_setup.sh prompt              # install prompt block only
-bash fish_setup.sh colors              # install color overrides only
-bash fish_setup.sh vim                 # install vim block only
-bash fish_setup.sh uninstall-path      # remove the PATH block
-bash fish_setup.sh uninstall-prompt    # remove the prompt block
-bash fish_setup.sh uninstall-colors    # remove the color block
-```
-
-The PATH block prepends `~/.local/bin` in `~/.config/fish/config.fish`
-when it is not already present.
-
-The color block overrides fish's default syntax-highlighting and pager
-colors that lean blue/cyan, so commands stay readable on dark
-backgrounds (e.g. WSL Ubuntu's default theme).
-
 Supported package managers: `apt-get`, `dnf`, `yum`, `apk`, `pacman`,
 `zypper`, `brew`. `sudo` is used automatically when not running as root.
-
-### `git_prompt.sh`
-
-A helper script that provides the Git status logic for the shell prompt. It is used by `bash_setup.sh`.
