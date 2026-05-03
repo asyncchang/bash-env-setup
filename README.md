@@ -7,7 +7,7 @@ This directory contains scripts to configure Bash, Fish, Nushell, and Vim.
 - `bash/setup.sh`: Bash environment, prompt, and Vim setup.
 - `bash/git_prompt.sh`: Git prompt helper used by Bash.
 - `fish/setup.sh`: Fish installation, environment, prompt, colors, and Vim setup.
-- `nushell/setup.sh`: Nushell installation, environment, and Vim setup.
+- `nushell/setup.sh`: Nushell installation, environment, prompt, and Vim setup.
 - `vim_setup.sh`: shared Vim settings writer used by all shell setup scripts.
 
 Each shell setup aligns these environment variables:
@@ -40,7 +40,7 @@ For Vim settings, reopen Vim or run `:source ~/.vimrc` inside Vim.
 
 ## Bash
 
-Configures Bash with a managed environment block, a Git-aware prompt, and Vim settings.
+Configures Bash with a managed environment block, a prompt that shows the full path, Git status, and right-side time, plus Vim settings.
 
 **Usage:**
 
@@ -59,7 +59,7 @@ This will:
 
 ## Fish
 
-Installs [fish](https://fishshell.com/) and can write managed environment, prompt, color, and Vim configuration blocks.
+Installs [fish](https://fishshell.com/) and can write managed environment, prompt, color, and Vim configuration blocks. The prompt shows the full path, Git status, and right-side time.
 
 ```bash
 bash fish/setup.sh                     # install fish + env + prompt + colors + vim (default)
@@ -79,17 +79,19 @@ Fish config is written to `~/.config/fish/config.fish`.
 
 ## Nushell
 
-Installs [Nushell](https://www.nushell.sh/) and can write managed environment and Vim configuration.
+Installs [Nushell](https://www.nushell.sh/) and can write managed environment, prompt, and Vim configuration. The prompt shows the full path, Git status, and right-side time.
 
 ```bash
-bash nushell/setup.sh                  # install nushell + env + vim (default)
+bash nushell/setup.sh                  # install nushell + env + prompt + vim (default)
 bash nushell/setup.sh install          # install nushell only
 bash nushell/setup.sh env              # install env block only
+bash nushell/setup.sh prompt           # install prompt block only
 bash nushell/setup.sh vim              # install vim block only
 bash nushell/setup.sh uninstall-env    # remove the env block
+bash nushell/setup.sh uninstall-prompt # remove the prompt block
 ```
 
-Nushell config is written to `~/.config/nushell/env.nu`.
+Nushell env config is written to `~/.config/nushell/env.nu`; prompt config is written to `~/.config/nushell/config.nu`.
 
 ## Vim
 

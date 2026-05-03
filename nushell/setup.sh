@@ -6,19 +6,25 @@ NUSHELL_ENV_BLOCK_START="# >>> shell-env nushell-env >>>"
 NUSHELL_ENV_BLOCK_END="# <<< shell-env nushell-env <<<"
 LEGACY_NUSHELL_ENV_BLOCK_START="# >>> bash-env-setup nushell-env >>>"
 LEGACY_NUSHELL_ENV_BLOCK_END="# <<< bash-env-setup nushell-env <<<"
+NUSHELL_PROMPT_BLOCK_START="# >>> shell-env nushell-prompt >>>"
+NUSHELL_PROMPT_BLOCK_END="# <<< shell-env nushell-prompt <<<"
+LEGACY_NUSHELL_PROMPT_BLOCK_START="# >>> bash-env-setup nushell-prompt >>>"
+LEGACY_NUSHELL_PROMPT_BLOCK_END="# <<< bash-env-setup nushell-prompt <<<"
 
 print_help() {
     cat <<EOF
 Usage:
-  bash nushell/setup.sh                # install nushell + env + vim
+  bash nushell/setup.sh                # install nushell + env + prompt + vim
   bash nushell/setup.sh install        # install nushell only
   bash nushell/setup.sh env            # install Nushell env block only
+  bash nushell/setup.sh prompt         # install Nushell prompt config only
   bash nushell/setup.sh vim            # install vim config only
   bash nushell/setup.sh uninstall-env  # remove the env block
+  bash nushell/setup.sh uninstall-prompt
   bash nushell/setup.sh [--help|-h]
 
 Description:
-  Installs Nushell plus optional env and Vim configuration.
+  Installs Nushell plus optional env, prompt, and Vim configuration.
 
 Supported package managers:
   apt-get, dnf, yum, apk, pacman, zypper, brew
@@ -27,6 +33,11 @@ Env behavior:
   Adds a managed block to ~/.config/nushell/env.nu that prepends
   ~/.local/bin when it is not already present in PATH, sets EDITOR and
   VISUAL to vim, and sets LS_COLORS.
+
+Prompt behavior:
+  Adds a managed block to ~/.config/nushell/config.nu that shows
+  user@host, the full \$PWD, git status, and puts the input on a new line,
+  with the current time on the right.
 EOF
 }
 
@@ -145,6 +156,89 @@ uninstall_nushell_env() {
     echo "nushell env block removed from ${config_file}"
 }
 
+remove_nushell_prompt_block() {
+    local config_file="$1"
+
+    [[ -f "${config_file}" ]] || return 0
+    sed -i "/${NUSHELL_PROMPT_BLOCK_START}/,/${NUSHELL_PROMPT_BLOCK_END}/d" "${config_file}"
+    sed -i "/${LEGACY_NUSHELL_PROMPT_BLOCK_START}/,/${LEGACY_NUSHELL_PROMPT_BLOCK_END}/d" "${config_file}"
+}
+
+write_nushell_prompt_block() {
+    local config_file="$1"
+
+    {
+        echo "${NUSHELL_PROMPT_BLOCK_START}"
+        cat <<'EOF'
+# Show user@host, the full path, git branch/status, and put input on a new line.
+def shell_env_git_prompt [] {
+    let in_repo = (do --ignore-errors { git rev-parse --is-inside-work-tree } | str trim)
+    if $in_repo != "true" {
+        return ""
+    }
+
+    let branch = (do --ignore-errors { git symbolic-ref --quiet --short HEAD } | str trim)
+    let ref = if ($branch | is-empty) {
+        let short_sha = (do --ignore-errors { git rev-parse --short HEAD } | str trim)
+        if ($short_sha | is-empty) {
+            "HEAD"
+        } else {
+            $"(($short_sha)...)"
+        }
+    } else {
+        $branch
+    }
+
+    let status_lines = (do --ignore-errors { git status --porcelain } | lines)
+    let unstaged = ($status_lines | any {|line| $line =~ '^.[MDU]' })
+    let staged = ($status_lines | any {|line| $line =~ '^[MADRCU]' })
+    let untracked = ($status_lines | any {|line| $line =~ '^\?\?' })
+    let flags = [
+        (if $unstaged { "*" } else { "" })
+        (if $staged { "+" } else { "" })
+        (if $untracked { "%" } else { "" })
+    ] | str join
+
+    let decorated_ref = if ($flags | is-empty) {
+        $ref
+    } else {
+        $"($ref) ($flags)"
+    }
+
+    $"(ansi yellow) (($decorated_ref))(ansi reset)"
+}
+
+$env.PROMPT_COMMAND = {||
+    let user = ($env.USER? | default "")
+    let host = (do --ignore-errors { hostname } | str trim)
+    $"(ansi green)($user)@($host)(ansi reset) (ansi cyan)($env.PWD)(ansi reset)(shell_env_git_prompt)\n"
+}
+
+$env.PROMPT_COMMAND_RIGHT = {|| date now | format date "%H:%M:%S" }
+$env.PROMPT_INDICATOR = "> "
+EOF
+        echo "${NUSHELL_PROMPT_BLOCK_END}"
+    } >> "${config_file}"
+}
+
+install_nushell_prompt() {
+    local config_dir="$HOME/.config/nushell"
+    local config_file="${config_dir}/config.nu"
+
+    mkdir -p "${config_dir}"
+    touch "${config_file}"
+    remove_nushell_prompt_block "${config_file}"
+    write_nushell_prompt_block "${config_file}"
+    echo "nushell prompt block installed in ${config_file}"
+}
+
+uninstall_nushell_prompt() {
+    local config_file="$HOME/.config/nushell/config.nu"
+
+    remove_nushell_prompt_block "${config_file}"
+    echo "nushell prompt block removed from ${config_file}"
+}
+
 install_vim() {
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -167,15 +261,22 @@ main() {
         env)
             install_nushell_env
             ;;
+        prompt)
+            install_nushell_prompt
+            ;;
         vim)
             install_vim
             ;;
         uninstall-env)
             uninstall_nushell_env
             ;;
+        uninstall-prompt)
+            uninstall_nushell_prompt
+            ;;
         all|"")
             install_nushell
             install_nushell_env
+            install_nushell_prompt
             install_vim
             ;;
         *)

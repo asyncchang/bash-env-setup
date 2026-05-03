@@ -13,7 +13,7 @@ Description:
 Behavior:
   - Copies git_prompt.sh to ~/.local/git_prompt.sh
   - Installs a managed env block in ~/.bashrc for PATH, EDITOR, VISUAL, and LS_COLORS
-  - Installs a managed prompt block in ~/.bashrc by default
+  - Installs a managed prompt block in ~/.bashrc with full path, git status, and right-side time
   - Writes managed Vim settings to ~/.vimrc
 EOF
 }
@@ -135,8 +135,13 @@ write_prompt_block() {
         local cwd='\\[\\e[1;36m\\]\\w\\[\\e[0m\\]'
         local git='\\[\\e[1;33m\\]'
         local reset='\\[\\e[0m\\]'
+        local right_time
+        local right_prompt
 
-        __git_ps1 "\${title}\${chroot}\${user_host} \${cwd}\${git}" "\${reset}\n\\\\\\$ "
+        right_time="\$(date +%H:%M:%S)"
+        right_prompt="\\[\\e[s\\]\\[\\e[999C\\]\\[\\e[8D\\]\${right_time}\\[\\e[u\\]"
+
+        __git_ps1 "\${title}\${chroot}\${user_host} \${cwd}\${git}" "\${reset}\${right_prompt}\n\\\\\\$ "
         return \$last_status
     }
 
