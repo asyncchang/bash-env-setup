@@ -1,34 +1,34 @@
 #!/bin/bash
 
+set -e
+
 print_help() {
     cat <<EOF
 Usage:
-  source bash/setup.sh
-  source bash/setup.sh [--help|-h]
+  bash bash/setup.sh                # install bash env + prompt + vim
+  bash bash/setup.sh env            # install Bash env block only
+  bash bash/setup.sh path           # alias for env
+  bash bash/setup.sh prompt         # install Bash prompt config only
+  bash bash/setup.sh vim            # install vim config only
+  bash bash/setup.sh uninstall-env  # remove the env block
+  bash bash/setup.sh uninstall-path # alias for uninstall-env
+  bash bash/setup.sh uninstall-prompt
   bash bash/setup.sh [--help|-h]
 
 Description:
-  Installs managed Bash environment and prompt configuration and writes managed Vim settings.
+  Installs managed Bash environment, prompt, and Vim configuration.
 
-Behavior:
-  - Copies git_prompt.sh to ~/.local/git_prompt.sh
-  - Installs a managed env block in ~/.bashrc for PATH, EDITOR, VISUAL, and LS_COLORS
-  - Installs a managed prompt block in ~/.bashrc with full path, git status, and right-side time
-  - Writes managed Vim settings to ~/.vimrc
+Env behavior:
+  Adds a managed block to ~/.bashrc that prepends ~/.local/bin when it is
+  not already present in PATH, sets EDITOR and VISUAL to vim, and sets
+  LS_COLORS.
+
+Prompt behavior:
+  Adds a managed block to ~/.bashrc that shows user@host, the full \$PWD,
+  git status, and puts the input on a new line, with the current time on
+  the right.
 EOF
 }
-
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    case "${1:-}" in
-        -h|--help|help)
-            print_help
-            exit 0
-            ;;
-    esac
-    echo "Error: this script must be sourced."
-    echo "Usage: source ${0}"
-    exit 1
-fi
 
 BASH_ENV_BLOCK_START="# >>> shell-env bash-env >>>"
 BASH_ENV_BLOCK_END="# <<< shell-env bash-env <<<"
@@ -44,6 +44,7 @@ LEGACY_PROMPT_BLOCK_END="# <<< bash-env-setup prompt <<<"
 remove_env_block() {
     local config_file="$1"
 
+    [[ -f "${config_file}" ]] || return 0
     sed -i "/${BASH_ENV_BLOCK_START}/,/${BASH_ENV_BLOCK_END}/d" "${config_file}"
     sed -i "/${LEGACY_BASH_ENV_BLOCK_START}/,/${LEGACY_BASH_ENV_BLOCK_END}/d" "${config_file}"
     sed -i "/${LEGACY_PATH_BLOCK_START}/,/${LEGACY_PATH_BLOCK_END}/d" "${config_file}"
@@ -83,6 +84,7 @@ EOF
 remove_prompt_block() {
     local config_file="$1"
 
+    [[ -f "${config_file}" ]] || return 0
     sed -i "/${PROMPT_BLOCK_START}/,/${PROMPT_BLOCK_END}/d" "${config_file}"
     sed -i "/${LEGACY_PROMPT_BLOCK_START}/,/${LEGACY_PROMPT_BLOCK_END}/d" "${config_file}"
 }
@@ -91,6 +93,7 @@ remove_legacy_prompt_config() {
     local config_file="$1"
     local prompt_file="$2"
 
+    [[ -f "${config_file}" ]] || return 0
     sed -i "\|source \"${prompt_file}\"|d" "${config_file}"
     sed -i '/^# set PS1$/d' "${config_file}"
     sed -i '/^GIT_PS1_SHOWDIRTYSTATE=/d' "${config_file}"
@@ -167,7 +170,6 @@ install_prompt() {
     remove_prompt_block "${config_file}"
     remove_legacy_prompt_config "${config_file}" "${prompt_file}"
     write_prompt_block "${config_file}" "${prompt_file}" "${host_token}"
-    source "${config_file}"
 }
 
 install_env() {
@@ -192,16 +194,19 @@ copy_git_prompt() {
     return 1
 }
 
-main() {
-    local mode="${1:-}"
-    local script_dir local_dir prompt_file
+install_bash_env() {
+    touch "$HOME/.bashrc"
+    install_env "$HOME/.bashrc"
+    echo "bash env block installed in $HOME/.bashrc"
+}
 
-    case "${mode}" in
-        -h|--help|help)
-            print_help
-            return 0
-            ;;
-    esac
+uninstall_bash_env() {
+    remove_env_block "$HOME/.bashrc"
+    echo "bash env block removed from $HOME/.bashrc"
+}
+
+install_bash_prompt() {
+    local script_dir local_dir prompt_file
 
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local_dir="$HOME/.local"
@@ -210,12 +215,64 @@ main() {
     copy_git_prompt "${script_dir}" "${local_dir}" || return 1
 
     touch "$HOME/.bashrc"
-    install_env "$HOME/.bashrc"
     install_prompt "$HOME/.bashrc" "${prompt_file}" '\h'
+    echo "bash prompt block installed in $HOME/.bashrc"
+}
+
+uninstall_bash_prompt() {
+    remove_prompt_block "$HOME/.bashrc"
+    remove_legacy_prompt_config "$HOME/.bashrc" "$HOME/.local/git_prompt.sh"
+    echo "bash prompt block removed from $HOME/.bashrc"
+}
+
+install_vim() {
+    local script_dir
+
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
     # shellcheck source=../vim_setup.sh
     source "${script_dir}/../vim_setup.sh"
     install_vim_config
+}
+
+install_all() {
+    install_bash_env
+    install_bash_prompt
+    install_vim
+}
+
+main() {
+    local mode="${1:-all}"
+
+    case "${mode}" in
+        -h|--help|help)
+            print_help
+            return 0
+            ;;
+        env|path)
+            install_bash_env
+            ;;
+        prompt)
+            install_bash_prompt
+            ;;
+        vim)
+            install_vim
+            ;;
+        uninstall-env|uninstall-path)
+            uninstall_bash_env
+            ;;
+        uninstall-prompt)
+            uninstall_bash_prompt
+            ;;
+        all|"")
+            install_all
+            ;;
+        *)
+            echo "Error: unknown mode '${mode}'" >&2
+            print_help >&2
+            exit 1
+            ;;
+    esac
 }
 
 main "$@"

@@ -42,20 +42,19 @@ For Vim settings, reopen Vim or run `:source ~/.vimrc` inside Vim.
 
 Configures Bash with a managed environment block, a prompt that shows the full path, Git status, and right-side time, plus Vim settings.
 
-**Usage:**
-
-This script **must be sourced** to work correctly.
-
 ```bash
-source bash/setup.sh
+bash bash/setup.sh                     # install bash env + prompt + vim (default)
+bash bash/setup.sh env                 # install env block only
+bash bash/setup.sh path                # alias for env
+bash bash/setup.sh prompt              # install prompt block only
+bash bash/setup.sh vim                 # install vim block only
+bash bash/setup.sh uninstall-env       # remove the env block
+bash bash/setup.sh uninstall-path      # alias for uninstall-env
+bash bash/setup.sh uninstall-prompt    # remove the prompt block
 ```
 
-This will:
-1. Copy `bash/git_prompt.sh` to `~/.local/git_prompt.sh`.
-2. Install a managed environment block in `~/.bashrc`.
-3. Install a managed prompt block in `~/.bashrc`.
-4. Source `vim_setup.sh` to write managed Vim settings to `~/.vimrc`.
-5. Reload the configuration in the current shell.
+Bash config is written to `~/.bashrc`. Prompt setup copies
+`bash/git_prompt.sh` to `~/.local/git_prompt.sh`.
 
 ## Fish
 
