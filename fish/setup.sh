@@ -141,7 +141,7 @@ if type -q dircolors
     set -gx LS_COLORS (dircolors -c | string replace -r "^setenv LS_COLORS '(.*)'\$" '$1')
 end
 
-set -l shell_env_ls_colors_suffix "di=1;38;5;51:ln=1;38;5;214"
+set -l shell_env_ls_colors_suffix "di=1;38;5;33:ln=1;38;5;214"
 if not string match -q "*$shell_env_ls_colors_suffix*" "$LS_COLORS"
     if test -n "$LS_COLORS"
         set -gx LS_COLORS "$LS_COLORS:$shell_env_ls_colors_suffix"
@@ -250,23 +250,33 @@ write_fish_colors_block() {
         echo "${FISH_COLORS_BLOCK_START}"
         cat <<'EOF'
 # Override fish's default syntax-highlighting, prompt, git, and pager
-# colors so text stays legible on WSL Ubuntu's dark theme.
+# colors so text stays legible on WSL Ubuntu's dark purple theme. Each
+# semantic role gets its own hue (or a unique attribute combination) so
+# nothing on the command line is ambiguous:
+#   green   = commands / user identity
+#   magenta = control-flow keywords / hostname / escapes
+#   yellow  = quoted strings / descriptions / options (bold for options)
+#   blue    = redirections (matches the bold blue used for `ls` dirs)
+#   cyan    = cwd path / operators (cwd is bold so it stays distinct)
+#   white   = parameters and pager text
+#   black   = autosuggestion / comments (intentionally muted)
+#   red     = errors / non-zero status
 set -g fish_color_normal normal
 set -g fish_color_command brgreen
-set -g fish_color_keyword brgreen
+set -g fish_color_keyword brmagenta
 set -g fish_color_quote bryellow
 set -g fish_color_param brwhite
-set -g fish_color_redirection bryellow
-set -g fish_color_operator bryellow
+set -g fish_color_redirection brblue
+set -g fish_color_operator brcyan
 set -g fish_color_end brwhite
-set -g fish_color_option brcyan
-set -g fish_color_escape brmagenta
+set -g fish_color_option bryellow --bold
+set -g fish_color_escape brmagenta --bold
 set -g fish_color_autosuggestion brblack
-set -g fish_color_comment brblack
+set -g fish_color_comment brblack --italics
 set -g fish_color_error brred --bold
-set -g fish_color_valid_path brcyan --underline
-set -g fish_color_selection white --bold --background=brblack
-set -g fish_color_search_match bryellow --background=brblack
+set -g fish_color_valid_path --underline
+set -g fish_color_selection brwhite --bold --background=brblack
+set -g fish_color_search_match --background=555555
 set -g fish_color_user brgreen --bold
 set -g fish_color_host brmagenta --bold
 set -g fish_color_host_remote bryellow --bold

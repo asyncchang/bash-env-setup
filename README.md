@@ -15,7 +15,7 @@ Each shell setup aligns these environment variables:
 - `PATH`: prepends `~/.local/bin` when it is not already present.
 - `EDITOR`: set to `vim`.
 - `VISUAL`: set to `vim`.
-- `LS_COLORS`: uses `dircolors` when available, then sets directories to bright cyan and symlinks to bright orange for WSL Ubuntu's dark theme.
+- `LS_COLORS`: uses `dircolors` when available, then sets directories to bold blue (the GNU dircolors convention, brightened to `38;5;33` for readability on WSL Ubuntu's dark theme) and symlinks to bright orange.
 
 All shell setup scripts write the same managed Vim settings block to `~/.vimrc`.
 

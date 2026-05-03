@@ -123,7 +123,7 @@ if (which dircolors | is-not-empty) {
     }
 }
 
-let shell_env_ls_colors_suffix = "di=1;38;5;51:ln=1;38;5;214"
+let shell_env_ls_colors_suffix = "di=1;38;5;33:ln=1;38;5;214"
 let shell_env_ls_colors = ($env.LS_COLORS? | default "")
 
 if not ($shell_env_ls_colors | str contains $shell_env_ls_colors_suffix) {
@@ -171,15 +171,24 @@ write_nushell_prompt_block() {
         echo "${NUSHELL_PROMPT_BLOCK_START}"
         cat <<'EOF'
 # Show user@host, the full path, git branch/status, and put input on a new line.
+# `complete` captures stderr so the noisy "fatal: not a git repository" message
+# stays out of the prompt when $PWD is not inside a git work tree.
 def shell_env_git_prompt [] {
-    let in_repo = (do --ignore-errors { git rev-parse --is-inside-work-tree } | str trim)
-    if $in_repo != "true" {
+    if (which git | is-empty) {
         return ""
     }
 
-    let branch = (do --ignore-errors { git symbolic-ref --quiet --short HEAD } | str trim)
+    let in_repo_result = (^git rev-parse --is-inside-work-tree | complete)
+    if $in_repo_result.exit_code != 0 {
+        return ""
+    }
+    if (($in_repo_result.stdout | str trim) != "true") {
+        return ""
+    }
+
+    let branch = (^git symbolic-ref --quiet --short HEAD | complete | get stdout | str trim)
     let ref = if ($branch | is-empty) {
-        let short_sha = (do --ignore-errors { git rev-parse --short HEAD } | str trim)
+        let short_sha = (^git rev-parse --short HEAD | complete | get stdout | str trim)
         if ($short_sha | is-empty) {
             "HEAD"
         } else {
@@ -189,7 +198,7 @@ def shell_env_git_prompt [] {
         $branch
     }
 
-    let status_lines = (do --ignore-errors { git status --porcelain } | lines)
+    let status_lines = (^git status --porcelain | complete | get stdout | lines)
     let unstaged = ($status_lines | any {|line| $line =~ '^.[MDU]' })
     let staged = ($status_lines | any {|line| $line =~ '^[MADRCU]' })
     let untracked = ($status_lines | any {|line| $line =~ '^\?\?' })
@@ -205,16 +214,24 @@ def shell_env_git_prompt [] {
         $"($ref) ($flags)"
     }
 
-    $"(ansi yellow_bold) (($decorated_ref))(ansi reset)"
+    $"(ansi { fg: '#FFD700' attr: b }) (($decorated_ref))(ansi reset)"
 }
 
+# Color palette tuned for WSL Ubuntu's dark purple background. Each prompt
+# segment uses a distinct hue so user/host/cwd/git/time are easy to tell
+# apart, and cwd uses bright cyan to stay clear of the bold blue used for
+# `ls` directories in LS_COLORS.
 $env.PROMPT_COMMAND = {||
     let user = ($env.USER? | default "")
     let host = (do --ignore-errors { hostname } | str trim)
-    $"(ansi light_green_bold)($user)(ansi reset)(ansi magenta_bold)@($host)(ansi reset) (ansi cyan_bold)($env.PWD)(ansi reset)(shell_env_git_prompt)\n"
+    let user_color = (ansi { fg: '#87FF87' attr: b })
+    let host_color = (ansi { fg: '#FF87FF' attr: b })
+    let cwd_color = (ansi { fg: '#5FFFFF' attr: b })
+    let reset = (ansi reset)
+    $"($user_color)($user)($reset)($host_color)@($host)($reset) ($cwd_color)($env.PWD)($reset)(shell_env_git_prompt)\n"
 }
 
-$env.PROMPT_COMMAND_RIGHT = {|| $"(ansi white_bold)(date now | format date "%H:%M:%S")(ansi reset)" }
+$env.PROMPT_COMMAND_RIGHT = {|| $"(ansi { fg: '#BCBCBC' attr: b })(date now | format date "%H:%M:%S")(ansi reset)" }
 $env.PROMPT_INDICATOR = "> "
 EOF
         echo "${NUSHELL_PROMPT_BLOCK_END}"
