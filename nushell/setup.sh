@@ -10,6 +10,7 @@ NUSHELL_PROMPT_BLOCK_START="# >>> shell-env nushell-prompt >>>"
 NUSHELL_PROMPT_BLOCK_END="# <<< shell-env nushell-prompt <<<"
 LEGACY_NUSHELL_PROMPT_BLOCK_START="# >>> bash-env-setup nushell-prompt >>>"
 LEGACY_NUSHELL_PROMPT_BLOCK_END="# <<< bash-env-setup nushell-prompt <<<"
+NUSHELL_LATEST_RELEASE_API="https://api.github.com/repos/nushell/nushell/releases/latest"
 
 print_help() {
     cat <<EOF
@@ -28,6 +29,8 @@ Description:
 
 Supported package managers:
   apt-get, dnf, yum, apk, pacman, zypper, brew
+  On apt systems without a nushell package, installs the latest GitHub
+  release tarball to /usr/local/bin.
 
 Env behavior:
   Adds a managed block to ~/.config/nushell/env.nu that prepends
@@ -60,7 +63,12 @@ install_nushell() {
     if command -v apt-get >/dev/null 2>&1; then
         echo "Installing nushell via apt-get..."
         $sudo apt-get update
-        $sudo apt-get install -y nushell
+        if apt-cache show nushell >/dev/null 2>&1; then
+            $sudo apt-get install -y nushell
+        else
+            echo "nushell is not available from configured apt repositories; installing latest release from GitHub..."
+            install_nushell_from_github_release "${sudo}"
+        fi
     elif command -v dnf >/dev/null 2>&1; then
         echo "Installing nushell via dnf..."
         $sudo dnf install -y nushell
@@ -90,6 +98,113 @@ install_nushell() {
     fi
 
     echo "nushell installed: $(command -v nu) ($(nu --version 2>/dev/null))"
+}
+
+download_to_stdout() {
+    local url="$1"
+
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "${url}"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO- "${url}"
+    else
+        echo "Error: curl or wget is required to download Nushell from GitHub." >&2
+        return 1
+    fi
+}
+
+download_to_file() {
+    local url="$1"
+    local output_file="$2"
+
+    if command -v curl >/dev/null 2>&1; then
+        curl -fL "${url}" -o "${output_file}"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -O "${output_file}" "${url}"
+    else
+        echo "Error: curl or wget is required to download Nushell from GitHub." >&2
+        return 1
+    fi
+}
+
+ensure_nushell_downloader() {
+    local sudo="$1"
+
+    if command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1; then
+        return 0
+    fi
+
+    if command -v apt-get >/dev/null 2>&1; then
+        echo "Installing curl for GitHub download..."
+        $sudo apt-get install -y ca-certificates curl
+        return 0
+    fi
+
+    echo "Error: curl or wget is required to download Nushell from GitHub." >&2
+    return 1
+}
+
+nushell_linux_target() {
+    case "$(uname -m)" in
+        x86_64|amd64)
+            echo "x86_64-unknown-linux-gnu"
+            ;;
+        aarch64|arm64)
+            echo "aarch64-unknown-linux-gnu"
+            ;;
+        armv7l|armv7)
+            echo "armv7-unknown-linux-gnueabihf"
+            ;;
+        *)
+            echo "Error: unsupported Linux architecture for Nushell GitHub install: $(uname -m)" >&2
+            return 1
+            ;;
+    esac
+}
+
+latest_nushell_version() {
+    download_to_stdout "${NUSHELL_LATEST_RELEASE_API}" \
+        | sed -n 's/.*"tag_name": "\([^"]*\)".*/\1/p' \
+        | sed -n '1p'
+}
+
+install_nushell_from_github_release() {
+    local sudo="$1"
+    local target version archive_name download_url tmpdir archive_file extract_dir binary
+
+    ensure_nushell_downloader "${sudo}"
+
+    target="$(nushell_linux_target)"
+    version="$(latest_nushell_version)"
+
+    if [[ -z "${version}" ]]; then
+        echo "Error: could not determine latest Nushell release version from GitHub." >&2
+        return 1
+    fi
+
+    archive_name="nu-${version}-${target}.tar.gz"
+    download_url="https://github.com/nushell/nushell/releases/download/${version}/${archive_name}"
+    tmpdir="$(mktemp -d)"
+    archive_file="${tmpdir}/${archive_name}"
+    extract_dir="${tmpdir}/nu-${version}-${target}"
+
+    download_to_file "${download_url}" "${archive_file}"
+    tar -xzf "${archive_file}" -C "${tmpdir}"
+
+    if [[ ! -x "${extract_dir}/nu" ]]; then
+        echo "Error: downloaded Nushell archive did not contain an executable 'nu'." >&2
+        rm -rf "${tmpdir}"
+        return 1
+    fi
+
+    $sudo install -d /usr/local/bin
+    for binary in "${extract_dir}"/nu*; do
+        if [[ -f "${binary}" && -x "${binary}" ]]; then
+            $sudo install -m 755 "${binary}" /usr/local/bin/
+        fi
+    done
+
+    rm -rf "${tmpdir}"
 }
 
 remove_nushell_env_block() {
@@ -123,7 +238,7 @@ if (which dircolors | is-not-empty) {
     }
 }
 
-let shell_env_ls_colors_suffix = "di=1;38;5;33:ln=1;38;5;214"
+let shell_env_ls_colors_suffix = "di=38;5;75:ln=38;5;222"
 let shell_env_ls_colors = ($env.LS_COLORS? | default "")
 
 if not ($shell_env_ls_colors | str contains $shell_env_ls_colors_suffix) {
@@ -214,24 +329,23 @@ def shell_env_git_prompt [] {
         $"($ref) ($flags)"
     }
 
-    $"(ansi { fg: '#FFD700' attr: b }) (($decorated_ref))(ansi reset)"
+    $"(ansi { fg: '#FFE680' }) (($decorated_ref))(ansi reset)"
 }
 
-# Color palette tuned for WSL Ubuntu's dark purple background. Each prompt
-# segment uses a distinct hue so user/host/cwd/git/time are easy to tell
-# apart, and cwd uses bright cyan to stay clear of the bold blue used for
-# `ls` directories in LS_COLORS.
+# Light color palette tuned for WSL Ubuntu's dark purple background without
+# relying on bold text. Each prompt segment uses a distinct hue so
+# user/host/cwd/git/time are easy to tell apart.
 $env.PROMPT_COMMAND = {||
     let user = ($env.USER? | default "")
     let host = (do --ignore-errors { hostname } | str trim)
-    let user_color = (ansi { fg: '#87FF87' attr: b })
-    let host_color = (ansi { fg: '#FF87FF' attr: b })
-    let cwd_color = (ansi { fg: '#5FFFFF' attr: b })
+    let user_color = (ansi { fg: '#AFFFAF' })
+    let host_color = (ansi { fg: '#FFAFFF' })
+    let cwd_color = (ansi { fg: '#AFFFFF' })
     let reset = (ansi reset)
     $"($user_color)($user)($reset)($host_color)@($host)($reset) ($cwd_color)($env.PWD)($reset)(shell_env_git_prompt)\n"
 }
 
-$env.PROMPT_COMMAND_RIGHT = {|| $"(ansi { fg: '#BCBCBC' attr: b })(date now | format date "%H:%M:%S")(ansi reset)" }
+$env.PROMPT_COMMAND_RIGHT = {|| $"(ansi { fg: '#E4E4E4' })(date now | format date "%H:%M:%S")(ansi reset)" }
 $env.PROMPT_INDICATOR = "> "
 EOF
         echo "${NUSHELL_PROMPT_BLOCK_END}"

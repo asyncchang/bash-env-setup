@@ -71,9 +71,9 @@ if [ -x /usr/bin/dircolors ]; then
 fi
 
 case ":${LS_COLORS:-}:" in
-    *":di=1;38;5;33:ln=1;38;5;214:"*) ;;
+    *":di=38;5;75:ln=38;5;222:"*) ;;
     *)
-        export LS_COLORS="${LS_COLORS:+${LS_COLORS}:}di=1;38;5;33:ln=1;38;5;214"
+        export LS_COLORS="${LS_COLORS:+${LS_COLORS}:}di=38;5;75:ln=38;5;222"
         ;;
 esac
 EOF
@@ -134,14 +134,13 @@ write_prompt_block() {
                 ;;
         esac
 
-        # Distinct hues chosen for legibility on WSL Ubuntu's dark purple
-        # background; cwd uses bright cyan (51) so it stays clear of the
-        # bold blue (33) used for directories in LS_COLORS.
-        local user='\\[\\e[1;38;5;120m\\]\\u\\[\\e[0m\\]'
-        local host='\\[\\e[1;38;5;213m\\]@${host_token}\\[\\e[0m\\]'
-        local cwd='\\[\\e[1;38;5;51m\\]\\w\\[\\e[0m\\]'
-        local git='\\[\\e[1;38;5;220m\\]'
-        local time_color='\\[\\e[1;38;5;250m\\]'
+        # Distinct light hues chosen for legibility on WSL Ubuntu's dark
+        # purple background without relying on bold text.
+        local user='\\[\\e[38;5;157m\\]\\u\\[\\e[0m\\]'
+        local host='\\[\\e[38;5;219m\\]@${host_token}\\[\\e[0m\\]'
+        local cwd='\\[\\e[38;5;159m\\]\\w\\[\\e[0m\\]'
+        local git='\\[\\e[38;5;228m\\]'
+        local time_color='\\[\\e[38;5;254m\\]'
         local reset='\\[\\e[0m\\]'
         local right_time
         local right_prompt

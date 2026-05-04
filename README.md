@@ -15,7 +15,7 @@ Each shell setup aligns these environment variables:
 - `PATH`: prepends `~/.local/bin` when it is not already present.
 - `EDITOR`: set to `vim`.
 - `VISUAL`: set to `vim`.
-- `LS_COLORS`: uses `dircolors` when available, then sets directories to bold blue (the GNU dircolors convention, brightened to `38;5;33` for readability on WSL Ubuntu's dark theme) and symlinks to bright orange.
+- `LS_COLORS`: uses `dircolors` when available, then sets directories to light blue (`38;5;75`) and symlinks to light orange (`38;5;222`) without bold attributes.
 
 All shell setup scripts write the same managed Vim settings block to `~/.vimrc`.
 
@@ -79,6 +79,7 @@ Fish config is written to `~/.config/fish/config.fish`.
 ## Nushell
 
 Installs [Nushell](https://www.nushell.sh/) and can write managed environment, prompt, and Vim configuration. The prompt shows the full path, Git status, and right-side time.
+On apt-based systems where `nushell` is not available from the configured repositories, the installer downloads the latest official Linux release from GitHub and installs `nu` and its bundled plugins to `/usr/local/bin`.
 
 ```bash
 bash nushell/setup.sh                  # install nushell + env + prompt + vim (default)

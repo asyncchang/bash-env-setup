@@ -141,7 +141,7 @@ if type -q dircolors
     set -gx LS_COLORS (dircolors -c | string replace -r "^setenv LS_COLORS '(.*)'\$" '$1')
 end
 
-set -l shell_env_ls_colors_suffix "di=1;38;5;33:ln=1;38;5;214"
+set -l shell_env_ls_colors_suffix "di=38;5;75:ln=38;5;222"
 if not string match -q "*$shell_env_ls_colors_suffix*" "$LS_COLORS"
     if test -n "$LS_COLORS"
         set -gx LS_COLORS "$LS_COLORS:$shell_env_ls_colors_suffix"
@@ -189,9 +189,9 @@ function fish_prompt --description 'shell-env: default prompt + full path + newl
         set -g __fish_prompt_hostname (prompt_hostname)
     end
 
-    set -l color_user brgreen
-    set -l color_host brmagenta
-    set -l color_cwd brcyan
+    set -l color_user afffaf
+    set -l color_host ffafff
+    set -l color_cwd afffff
     set -l suffix
     switch "$USER"
         case root toor
@@ -202,9 +202,9 @@ function fish_prompt --description 'shell-env: default prompt + full path + newl
             set suffix '>'
     end
 
-    set -l prompt_status (__fish_print_pipestatus " [" "]" "|" (set_color $fish_color_status) (set_color --bold $fish_color_status) $last_pipestatus)
+    set -l prompt_status (__fish_print_pipestatus " [" "]" "|" (set_color $fish_color_status) (set_color $fish_color_status) $last_pipestatus)
 
-    echo -n -s (set_color --bold $color_user) "$USER" (set_color normal) @ (set_color --bold $color_host) $__fish_prompt_hostname (set_color normal) ' ' (set_color --bold $color_cwd) $PWD (set_color normal) (fish_vcs_prompt) $prompt_status
+    echo -n -s (set_color $color_user) "$USER" (set_color normal) @ (set_color $color_host) $__fish_prompt_hostname (set_color normal) ' ' (set_color $color_cwd) $PWD (set_color normal) (fish_vcs_prompt) $prompt_status
     echo
     echo -n "$suffix "
 end
@@ -255,9 +255,9 @@ write_fish_colors_block() {
 # nothing on the command line is ambiguous:
 #   green   = commands / user identity
 #   magenta = control-flow keywords / hostname / escapes
-#   yellow  = quoted strings / descriptions / options (bold for options)
-#   blue    = redirections (matches the bold blue used for `ls` dirs)
-#   cyan    = cwd path / operators (cwd is bold so it stays distinct)
+#   yellow  = quoted strings / descriptions / options
+#   blue    = redirections (matches the light blue used for `ls` dirs)
+#   cyan    = cwd path / operators
 #   white   = parameters and pager text
 #   black   = autosuggestion / comments (intentionally muted)
 #   red     = errors / non-zero status
@@ -269,26 +269,26 @@ set -g fish_color_param brwhite
 set -g fish_color_redirection brblue
 set -g fish_color_operator brcyan
 set -g fish_color_end brwhite
-set -g fish_color_option bryellow --bold
-set -g fish_color_escape brmagenta --bold
+set -g fish_color_option bryellow
+set -g fish_color_escape brmagenta
 set -g fish_color_autosuggestion brblack
 set -g fish_color_comment brblack --italics
-set -g fish_color_error brred --bold
+set -g fish_color_error brred
 set -g fish_color_valid_path --underline
-set -g fish_color_selection brwhite --bold --background=brblack
+set -g fish_color_selection brwhite --background=brblack
 set -g fish_color_search_match --background=555555
-set -g fish_color_user brgreen --bold
-set -g fish_color_host brmagenta --bold
-set -g fish_color_host_remote bryellow --bold
-set -g fish_color_cwd brcyan --bold
-set -g fish_color_cwd_root brred --bold
-set -g fish_color_status brred --bold
-set -g fish_color_cancel brred --bold
+set -g fish_color_user brgreen
+set -g fish_color_host brmagenta
+set -g fish_color_host_remote bryellow
+set -g fish_color_cwd brcyan
+set -g fish_color_cwd_root brred
+set -g fish_color_status brred
+set -g fish_color_cancel brred
 set -g fish_color_match bryellow --background=brblack
-set -g fish_color_history_current bryellow --bold
+set -g fish_color_history_current bryellow
 set -g fish_pager_color_completion brwhite
 set -g fish_pager_color_description bryellow
-set -g fish_pager_color_prefix brgreen --bold
+set -g fish_pager_color_prefix brgreen
 set -g fish_pager_color_progress brwhite --background=brblack
 set -g fish_pager_color_secondary_background --background=brblack
 set -g fish_pager_color_selected_background --background=brblack
