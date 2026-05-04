@@ -346,7 +346,7 @@ $env.PROMPT_COMMAND = {||
 }
 
 $env.PROMPT_COMMAND_RIGHT = {|| $"(ansi { fg: '#E4E4E4' })(date now | format date "%H:%M:%S")(ansi reset)" }
-$env.PROMPT_INDICATOR = "> "
+$env.PROMPT_INDICATOR = {|| $"(ansi reset)> " }
 EOF
         echo "${NUSHELL_PROMPT_BLOCK_END}"
     } >> "${config_file}"

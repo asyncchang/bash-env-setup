@@ -148,7 +148,7 @@ write_prompt_block() {
         right_time="\$(date +%H:%M:%S)"
         right_prompt="\\[\\e[s\\]\\[\\e[999C\\]\\[\\e[8D\\]\${time_color}\${right_time}\${reset}\\[\\e[u\\]"
 
-        __git_ps1 "\${title}\${chroot}\${user}\${host} \${cwd}\${git}" "\${reset}\${right_prompt}\n\\\\\\$ "
+        __git_ps1 "\${title}\${chroot}\${user}\${host} \${cwd}\${git}" "\${reset}\${right_prompt}\n\${reset}\\\\\\$ "
         return \$last_status
     }
 

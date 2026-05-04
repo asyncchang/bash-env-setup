@@ -206,7 +206,7 @@ function fish_prompt --description 'shell-env: default prompt + full path + newl
 
     echo -n -s (set_color $color_user) "$USER" (set_color normal) @ (set_color $color_host) $__fish_prompt_hostname (set_color normal) ' ' (set_color $color_cwd) $PWD (set_color normal) (fish_vcs_prompt) $prompt_status
     echo
-    echo -n "$suffix "
+    echo -n -s (set_color normal) "$suffix "
 end
 
 function fish_right_prompt --description 'shell-env: current time'
