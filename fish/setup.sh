@@ -20,17 +20,18 @@ LEGACY_FISH_COLORS_BLOCK_END="# <<< bash-env-setup fish-colors <<<"
 print_help() {
     cat <<EOF
 Usage:
-  bash fish/setup.sh                # install fish + env + prompt + colors + vim
-  bash fish/setup.sh install        # install fish only
-  bash fish/setup.sh env            # install fish env block only
-  bash fish/setup.sh path           # alias for env
-  bash fish/setup.sh prompt         # install fish prompt config only
-  bash fish/setup.sh colors         # install fish color overrides only
-  bash fish/setup.sh vim            # install vim config only
-  bash fish/setup.sh uninstall-env  # remove the env block
-  bash fish/setup.sh uninstall-path # alias for uninstall-env
+  bash fish/setup.sh                    # install fish + env + prompt + colors + vim
+  bash fish/setup.sh install            # install fish only
+  bash fish/setup.sh env                # install fish env block only
+  bash fish/setup.sh path               # alias for env
+  bash fish/setup.sh prompt             # install fish prompt config only
+  bash fish/setup.sh colors             # install fish color overrides only
+  bash fish/setup.sh vim                # install vim config only
+  bash fish/setup.sh uninstall-env      # remove the env block
+  bash fish/setup.sh uninstall-path     # alias for uninstall-env
   bash fish/setup.sh uninstall-prompt
   bash fish/setup.sh uninstall-colors
+  bash fish/setup.sh env prompt colors  # run multiple modes in order
   bash fish/setup.sh [--help|-h]
 
 Description:
@@ -359,8 +360,8 @@ install_vim() {
     install_vim_config
 }
 
-main() {
-    local mode="${1:-all}"
+run_mode() {
+    local mode="$1"
 
     case "${mode}" in
         -h|--help|help)
@@ -400,9 +401,22 @@ main() {
         *)
             echo "Error: unknown mode '${mode}'" >&2
             print_help >&2
-            exit 1
+            return 1
             ;;
     esac
+}
+
+main() {
+    if [[ $# -eq 0 ]]; then
+        run_mode all
+        return
+    fi
+
+    local mode status=0
+    for mode in "$@"; do
+        run_mode "${mode}" || status=$?
+    done
+    return "${status}"
 }
 
 main "$@"

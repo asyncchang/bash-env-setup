@@ -51,6 +51,7 @@ bash bash/setup.sh vim                 # install vim block only
 bash bash/setup.sh uninstall-env       # remove the env block
 bash bash/setup.sh uninstall-path      # alias for uninstall-env
 bash bash/setup.sh uninstall-prompt    # remove the prompt block
+bash bash/setup.sh env prompt vim      # run multiple modes in order
 ```
 
 Bash config is written to `~/.bashrc`. Prompt setup copies
@@ -72,6 +73,7 @@ bash fish/setup.sh uninstall-env       # remove the env block
 bash fish/setup.sh uninstall-path      # alias for uninstall-env
 bash fish/setup.sh uninstall-prompt    # remove the prompt block
 bash fish/setup.sh uninstall-colors    # remove the color block
+bash fish/setup.sh env prompt colors   # run multiple modes in order
 ```
 
 Fish config is written to `~/.config/fish/config.fish`.
@@ -89,6 +91,7 @@ bash nushell/setup.sh prompt           # install prompt block only
 bash nushell/setup.sh vim              # install vim block only
 bash nushell/setup.sh uninstall-env    # remove the env block
 bash nushell/setup.sh uninstall-prompt # remove the prompt block
+bash nushell/setup.sh env prompt       # run multiple modes in order
 ```
 
 Nushell env config is written to `~/.config/nushell/env.nu`; prompt config is written to `~/.config/nushell/config.nu`.

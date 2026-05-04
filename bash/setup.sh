@@ -5,14 +5,15 @@ set -e
 print_help() {
     cat <<EOF
 Usage:
-  bash bash/setup.sh                # install bash env + prompt + vim
-  bash bash/setup.sh env            # install Bash env block only
-  bash bash/setup.sh path           # alias for env
-  bash bash/setup.sh prompt         # install Bash prompt config only
-  bash bash/setup.sh vim            # install vim config only
-  bash bash/setup.sh uninstall-env  # remove the env block
-  bash bash/setup.sh uninstall-path # alias for uninstall-env
+  bash bash/setup.sh                  # install bash env + prompt + vim
+  bash bash/setup.sh env              # install Bash env block only
+  bash bash/setup.sh path             # alias for env
+  bash bash/setup.sh prompt           # install Bash prompt config only
+  bash bash/setup.sh vim              # install vim config only
+  bash bash/setup.sh uninstall-env    # remove the env block
+  bash bash/setup.sh uninstall-path   # alias for uninstall-env
   bash bash/setup.sh uninstall-prompt
+  bash bash/setup.sh env prompt vim   # run multiple modes in order
   bash bash/setup.sh [--help|-h]
 
 Description:
@@ -243,13 +244,12 @@ install_all() {
     install_vim
 }
 
-main() {
-    local mode="${1:-all}"
+run_mode() {
+    local mode="$1"
 
     case "${mode}" in
         -h|--help|help)
             print_help
-            return 0
             ;;
         env|path)
             install_bash_env
@@ -272,9 +272,22 @@ main() {
         *)
             echo "Error: unknown mode '${mode}'" >&2
             print_help >&2
-            exit 1
+            return 1
             ;;
     esac
+}
+
+main() {
+    if [[ $# -eq 0 ]]; then
+        run_mode all
+        return
+    fi
+
+    local mode status=0
+    for mode in "$@"; do
+        run_mode "${mode}" || status=$?
+    done
+    return "${status}"
 }
 
 main "$@"

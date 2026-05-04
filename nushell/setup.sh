@@ -22,6 +22,7 @@ Usage:
   bash nushell/setup.sh vim            # install vim config only
   bash nushell/setup.sh uninstall-env  # remove the env block
   bash nushell/setup.sh uninstall-prompt
+  bash nushell/setup.sh env prompt     # run multiple modes in order
   bash nushell/setup.sh [--help|-h]
 
 Description:
@@ -413,8 +414,8 @@ install_vim() {
     install_vim_config
 }
 
-main() {
-    local mode="${1:-all}"
+run_mode() {
+    local mode="$1"
 
     case "${mode}" in
         -h|--help|help)
@@ -447,9 +448,22 @@ main() {
         *)
             echo "Error: unknown mode '${mode}'" >&2
             print_help >&2
-            exit 1
+            return 1
             ;;
     esac
+}
+
+main() {
+    if [[ $# -eq 0 ]]; then
+        run_mode all
+        return
+    fi
+
+    local mode status=0
+    for mode in "$@"; do
+        run_mode "${mode}" || status=$?
+    done
+    return "${status}"
 }
 
 main "$@"
