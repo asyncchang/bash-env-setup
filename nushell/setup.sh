@@ -305,6 +305,8 @@ write_nushell_prompt_block() {
     {
         echo "${NUSHELL_PROMPT_BLOCK_START}"
         cat <<'EOF'
+$env.config = ($env.config? | default {} | merge { show_banner: false })
+
 # Show user@host, the full path, git branch/status, and put input on a new line.
 # `complete` captures stderr so the noisy "fatal: not a git repository" message
 # stays out of the prompt when $PWD is not inside a git work tree.
@@ -355,13 +357,16 @@ def shell_env_git_prompt [] {
 # Light color palette tuned for WSL Ubuntu's dark purple background without
 # relying on bold text. Each prompt segment uses a distinct hue so
 # user/host/cwd/git/time are easy to tell apart.
-$env.PROMPT_COMMAND = {||
+def shell_env_current_user [] {
     let user_env = ($env.USER? | default "")
-    let user = if ($user_env | is-empty) {
-        (do --ignore-errors { ^id -un } | str trim)
-    } else {
-        $user_env
+    if not ($user_env | is-empty) {
+        return $user_env
     }
+    try { ^id -un | str trim } catch { "" }
+}
+
+$env.PROMPT_COMMAND = {||
+    let user = (shell_env_current_user)
     let host = (do --ignore-errors { hostname } | str trim)
     let is_root = ($user == "root" or $user == "toor")
     let user_color = if $is_root { (ansi { fg: '#FF8700' }) } else { (ansi { fg: '#AFFFAF' }) }
@@ -373,12 +378,7 @@ $env.PROMPT_COMMAND = {||
 
 $env.PROMPT_COMMAND_RIGHT = {|| $"(ansi { fg: '#E4E4E4' })(date now | format date "%H:%M:%S")(ansi reset)" }
 $env.PROMPT_INDICATOR = {||
-    let user_env = ($env.USER? | default "")
-    let user = if ($user_env | is-empty) {
-        (do --ignore-errors { ^id -un } | str trim)
-    } else {
-        $user_env
-    }
+    let user = (shell_env_current_user)
     if ($user == "root" or $user == "toor") { "# " } else { "> " }
 }
 EOF
