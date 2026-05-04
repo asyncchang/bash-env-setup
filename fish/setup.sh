@@ -217,8 +217,8 @@ function fish_prompt --description 'shell-env: default prompt + full path + newl
     set -l suffix
     switch "$prompt_user"
         case root toor
-            set color_user brred
-            set color_host brred
+            set color_user ff8700
+            set color_host ff8700
             set suffix '#'
         case '*'
             set suffix '>'
@@ -232,7 +232,7 @@ function fish_prompt --description 'shell-env: default prompt + full path + newl
 end
 
 function fish_right_prompt --description 'shell-env: current time'
-    echo -n -s (set_color brwhite) (date '+%H:%M:%S') (set_color normal)
+    echo -n -s (set_color e4e4e4) (date '+%H:%M:%S') (set_color normal)
 end
 EOF
         echo "${FISH_PROMPT_BLOCK_END}"
@@ -282,7 +282,7 @@ write_fish_colors_block() {
 #   cyan    = cwd path / operators
 #   white   = parameters and pager text
 #   black   = autosuggestion / comments (intentionally muted)
-#   red     = errors / non-zero status
+#   orange  = errors / non-zero status
 set -g fish_color_normal normal
 set -g fish_color_command brgreen
 set -g fish_color_keyword brmagenta
@@ -295,7 +295,7 @@ set -g fish_color_option bryellow
 set -g fish_color_escape brmagenta
 set -g fish_color_autosuggestion brblack
 set -g fish_color_comment brblack --italics
-set -g fish_color_error brred
+set -g fish_color_error ff8700
 set -g fish_color_valid_path --underline
 set -g fish_color_selection brwhite --background=brblack
 set -g fish_color_search_match --background=555555
@@ -303,9 +303,9 @@ set -g fish_color_user brgreen
 set -g fish_color_host brmagenta
 set -g fish_color_host_remote bryellow
 set -g fish_color_cwd brcyan
-set -g fish_color_cwd_root brred
-set -g fish_color_status brred
-set -g fish_color_cancel brred
+set -g fish_color_cwd_root ff8700
+set -g fish_color_status ff8700
+set -g fish_color_cancel ff8700
 set -g fish_color_match bryellow --background=brblack
 set -g fish_color_history_current bryellow
 set -g fish_pager_color_completion brwhite
@@ -314,6 +314,19 @@ set -g fish_pager_color_prefix brgreen
 set -g fish_pager_color_progress brwhite --background=brblack
 set -g fish_pager_color_secondary_background --background=brblack
 set -g fish_pager_color_selected_background --background=brblack
+
+# Align git status segment with bash __git_ps1 (single yellow hue, color 228 / #FFFF87).
+set -g __fish_git_prompt_color ffff87
+set -g __fish_git_prompt_color_branch ffff87
+set -g __fish_git_prompt_color_branch_detached ffff87
+set -g __fish_git_prompt_color_dirtystate ffff87
+set -g __fish_git_prompt_color_stagedstate ffff87
+set -g __fish_git_prompt_color_invalidstate ffff87
+set -g __fish_git_prompt_color_untrackedfiles ffff87
+set -g __fish_git_prompt_color_cleanstate ffff87
+set -g __fish_git_prompt_color_stashstate ffff87
+set -g __fish_git_prompt_color_upstream ffff87
+set -g __fish_git_prompt_color_flags ffff87
 EOF
         echo "${FISH_COLORS_BLOCK_END}"
     } >> "${config_file}"

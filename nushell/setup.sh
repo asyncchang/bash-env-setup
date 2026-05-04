@@ -327,7 +327,7 @@ def shell_env_git_prompt [] {
         if ($short_sha | is-empty) {
             "HEAD"
         } else {
-            $"(($short_sha)...)"
+            $"\(($short_sha)...\)"
         }
     } else {
         $branch
@@ -349,7 +349,7 @@ def shell_env_git_prompt [] {
         $"($ref) ($flags)"
     }
 
-    $"(ansi { fg: '#FFE680' }) (($decorated_ref))(ansi reset)"
+    $"(ansi { fg: '#FFFF87' }) \(($decorated_ref)\)(ansi reset)"
 }
 
 # Light color palette tuned for WSL Ubuntu's dark purple background without
@@ -364,8 +364,8 @@ $env.PROMPT_COMMAND = {||
     }
     let host = (do --ignore-errors { hostname } | str trim)
     let is_root = ($user == "root" or $user == "toor")
-    let user_color = if $is_root { (ansi red_bold) } else { (ansi { fg: '#AFFFAF' }) }
-    let host_color = if $is_root { (ansi red_bold) } else { (ansi { fg: '#FFAFFF' }) }
+    let user_color = if $is_root { (ansi { fg: '#FF8700' }) } else { (ansi { fg: '#AFFFAF' }) }
+    let host_color = if $is_root { (ansi { fg: '#FF8700' }) } else { (ansi { fg: '#FFAFFF' }) }
     let cwd_color = (ansi { fg: '#AFFFFF' })
     let reset = (ansi reset)
     $"($user_color)($user)($reset)($host_color)@($host)($reset) ($cwd_color)($env.PWD)($reset)(shell_env_git_prompt)\n"
