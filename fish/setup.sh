@@ -130,6 +130,23 @@ write_fish_env_block() {
     {
         echo "${FISH_ENV_BLOCK_START}"
         cat <<'EOF'
+set -l shell_env_claude_env_file "$HOME/.config/claude-code/env.sh"
+if test -f "$shell_env_claude_env_file"
+    bash -lc '
+        source "$1"
+        while IFS= read -r name; do
+            if [[ -n ${!name+x} ]]; then
+                printf "%s\t%s\n" "$name" "${!name}"
+            fi
+        done < <(sed -nE "s/^[[:space:]]*export[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/p" "$1" | sort -u)
+    ' bash "$shell_env_claude_env_file" | while read -l line
+        set -l pair (string split -m 1 \t -- "$line")
+        if test (count $pair) -eq 2
+            set -gx $pair[1] $pair[2]
+        end
+    end
+end
+
 if not contains -- "$HOME/.local/bin" $PATH
     set -gx PATH "$HOME/.local/bin" $PATH
 end
@@ -189,11 +206,16 @@ function fish_prompt --description 'shell-env: default prompt + full path + newl
         set -g __fish_prompt_hostname (prompt_hostname)
     end
 
+    set -l prompt_user "$USER"
+    if test -z "$prompt_user"
+        set prompt_user (id -un 2>/dev/null)
+    end
+
     set -l color_user afffaf
     set -l color_host ffafff
     set -l color_cwd afffff
     set -l suffix
-    switch "$USER"
+    switch "$prompt_user"
         case root toor
             set color_user brred
             set color_host brred
@@ -204,7 +226,7 @@ function fish_prompt --description 'shell-env: default prompt + full path + newl
 
     set -l prompt_status (__fish_print_pipestatus " [" "]" "|" (set_color $fish_color_status) (set_color $fish_color_status) $last_pipestatus)
 
-    echo -n -s (set_color $color_user) "$USER" (set_color normal) @ (set_color $color_host) $__fish_prompt_hostname (set_color normal) ' ' (set_color $color_cwd) $PWD (set_color normal) (fish_vcs_prompt) $prompt_status
+    echo -n -s (set_color $color_user) "$prompt_user" (set_color normal) @ (set_color $color_host) $__fish_prompt_hostname (set_color normal) ' ' (set_color $color_cwd) $PWD (set_color normal) (fish_vcs_prompt) $prompt_status
     echo
     echo -n -s (set_color normal) "$suffix "
 end

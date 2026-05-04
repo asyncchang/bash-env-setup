@@ -221,6 +221,26 @@ write_nushell_env_block() {
     {
         echo "${NUSHELL_ENV_BLOCK_START}"
         cat <<'EOF'
+let shell_env_claude_env_file = ($env.HOME | path join ".config" "claude-code" "env.sh")
+if ($shell_env_claude_env_file | path exists) {
+    let shell_env_claude_exports = (
+        bash -lc '
+            source "$1"
+            while IFS= read -r name; do
+                if [[ -n ${!name+x} ]]; then
+                    printf "%s\t%s\n" "$name" "${!name}"
+                fi
+            done < <(sed -nE "s/^[[:space:]]*export[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/p" "$1" | sort -u)
+        ' bash $shell_env_claude_env_file
+        | lines
+        | parse "{name}\t{value}"
+        | reduce -f {} {|row, acc| $acc | upsert $row.name $row.value }
+    )
+    if not ($shell_env_claude_exports | is-empty) {
+        load-env $shell_env_claude_exports
+    }
+}
+
 let shell_env_local_bin = ($env.HOME | path join ".local" "bin")
 let shell_env_path = ($env.PATH? | default [])
 
@@ -336,17 +356,31 @@ def shell_env_git_prompt [] {
 # relying on bold text. Each prompt segment uses a distinct hue so
 # user/host/cwd/git/time are easy to tell apart.
 $env.PROMPT_COMMAND = {||
-    let user = ($env.USER? | default "")
+    let user_env = ($env.USER? | default "")
+    let user = if ($user_env | is-empty) {
+        (do --ignore-errors { ^id -un } | str trim)
+    } else {
+        $user_env
+    }
     let host = (do --ignore-errors { hostname } | str trim)
-    let user_color = (ansi { fg: '#AFFFAF' })
-    let host_color = (ansi { fg: '#FFAFFF' })
+    let is_root = ($user == "root" or $user == "toor")
+    let user_color = if $is_root { (ansi red_bold) } else { (ansi { fg: '#AFFFAF' }) }
+    let host_color = if $is_root { (ansi red_bold) } else { (ansi { fg: '#FFAFFF' }) }
     let cwd_color = (ansi { fg: '#AFFFFF' })
     let reset = (ansi reset)
     $"($user_color)($user)($reset)($host_color)@($host)($reset) ($cwd_color)($env.PWD)($reset)(shell_env_git_prompt)\n"
 }
 
 $env.PROMPT_COMMAND_RIGHT = {|| $"(ansi { fg: '#E4E4E4' })(date now | format date "%H:%M:%S")(ansi reset)" }
-$env.PROMPT_INDICATOR = {|| $"(ansi reset)> " }
+$env.PROMPT_INDICATOR = {||
+    let user_env = ($env.USER? | default "")
+    let user = if ($user_env | is-empty) {
+        (do --ignore-errors { ^id -un } | str trim)
+    } else {
+        $user_env
+    }
+    if ($user == "root" or $user == "toor") { "# " } else { "> " }
+}
 EOF
         echo "${NUSHELL_PROMPT_BLOCK_END}"
     } >> "${config_file}"
