@@ -212,22 +212,20 @@ function fish_prompt --description 'shell-env: default prompt + full path + newl
         set prompt_user (id -un 2>/dev/null)
     end
 
-    set -l color_user afffaf
-    set -l color_host ffafff
-    set -l color_cwd afffff
-    set -l suffix
+    set -l color_userhost afffaf
+    set -l color_cwd ffaf87
+    set -l color_git afd7ff
+    set -l suffix '>'
     switch "$prompt_user"
         case root toor
-            set color_user ff8700
-            set color_host ff8700
             set suffix '#'
-        case '*'
-            set suffix '>'
     end
+
+    set -g __fish_git_prompt_color $color_git
 
     set -l prompt_status (__fish_print_pipestatus " [" "]" "|" (set_color $fish_color_status) (set_color $fish_color_status) $last_pipestatus)
 
-    echo -n -s (set_color $color_user) "$prompt_user" (set_color normal) @ (set_color $color_host) $__fish_prompt_hostname (set_color normal) ' ' (set_color $color_cwd) $PWD (set_color normal) (fish_vcs_prompt) $prompt_status
+    echo -n -s (set_color $color_userhost) "$prompt_user@$__fish_prompt_hostname" (set_color normal) ' ' (set_color $color_cwd) $PWD (set_color $color_git) (fish_vcs_prompt) (set_color normal) $prompt_status
     echo
     echo -n -s (set_color normal) "$suffix "
 end

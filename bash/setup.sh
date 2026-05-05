@@ -137,10 +137,9 @@ write_prompt_block() {
 
         # Distinct light hues chosen for legibility on WSL Ubuntu's dark
         # purple background without relying on bold text.
-        local user='\\[\\e[38;5;157m\\]\\u\\[\\e[0m\\]'
-        local host='\\[\\e[38;5;219m\\]@${host_token}\\[\\e[0m\\]'
-        local cwd='\\[\\e[38;5;159m\\]\\w\\[\\e[0m\\]'
-        local git='\\[\\e[38;5;228m\\]'
+        local userhost='\\[\\e[38;5;157m\\]\\u@${host_token}\\[\\e[0m\\]'
+        local cwd='\\[\\e[38;5;216m\\]\\w\\[\\e[0m\\]'
+        local git='\\[\\e[38;5;153m\\]'
         local time_color='\\[\\e[38;5;254m\\]'
         local reset='\\[\\e[0m\\]'
         local right_time
@@ -149,7 +148,7 @@ write_prompt_block() {
         right_time="\$(date +%H:%M:%S)"
         right_prompt="\\[\\e[s\\]\\[\\e[999C\\]\\[\\e[8D\\]\${time_color}\${right_time}\${reset}\\[\\e[u\\]"
 
-        __git_ps1 "\${title}\${chroot}\${user}\${host} \${cwd}\${git}" "\${reset}\${right_prompt}\n\${reset}\\\\\\$ "
+        __git_ps1 "\${title}\${chroot}\${userhost} \${cwd}\${git}" "\${reset}\${right_prompt}\n\${reset}\\\\\\$ "
         return \$last_status
     }
 

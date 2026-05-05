@@ -352,7 +352,7 @@ def shell_env_git_prompt [] {
         $"($ref) ($flags)"
     }
 
-    $"(ansi { fg: '#FFFF87' }) \(($decorated_ref)\)(ansi reset)"
+    $"(ansi { fg: '#AFD7FF' }) \(($decorated_ref)\)(ansi reset)"
 }
 
 # Light color palette tuned for WSL Ubuntu's dark purple background without
@@ -369,12 +369,10 @@ def shell_env_current_user [] {
 $env.PROMPT_COMMAND = {||
     let user = (shell_env_current_user)
     let host = (do --ignore-errors { hostname } | str trim | split row '.' | first)
-    let is_root = ($user == "root" or $user == "toor")
-    let user_color = if $is_root { (ansi { fg: '#FF8700' }) } else { (ansi { fg: '#AFFFAF' }) }
-    let host_color = if $is_root { (ansi { fg: '#FF8700' }) } else { (ansi { fg: '#FFAFFF' }) }
-    let cwd_color = (ansi { fg: '#AFFFFF' })
+    let userhost_color = (ansi { fg: '#AFFFAF' })
+    let cwd_color = (ansi { fg: '#FFAF87' })
     let reset = (ansi reset)
-    $"($user_color)($user)($reset)($host_color)@($host)($reset) ($cwd_color)($env.PWD)($reset)(shell_env_git_prompt)\n"
+    $"($userhost_color)($user)@($host)($reset) ($cwd_color)($env.PWD)($reset)(shell_env_git_prompt)\n"
 }
 
 $env.PROMPT_COMMAND_RIGHT = {|| $"(ansi { fg: '#E4E4E4' })(date now | format date "%H:%M:%S")(ansi reset)" }
